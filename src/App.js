@@ -313,16 +313,26 @@ function App() {
             
             <div className="login-form">
               <label htmlFor="driver-select">Select Your Name:</label>
-              <select 
+              <select
                 id="driver-select"
-                value={currentDriver} 
+                value={currentDriver}
                 onChange={(e) => setCurrentDriver(e.target.value)}
-                className="select-input"
+                required
               >
-                <option value="">-- Select Driver --</option>
-                {DRIVERS.map(driver => (
-                  <option key={driver} value={driver}>{driver}</option>
-                ))}
+                <option value="">-- Select Your Name --</option>
+                
+                {/* ADD THIS SECTION ⬇️ */}
+                <optgroup label="Batch Managers">
+                  {BATCH_MANAGERS.map(manager => (
+                    <option key={manager} value={manager}>{manager}</option>
+                  ))}
+                </optgroup>
+                
+                <optgroup label="Drivers">
+                  {DRIVERS.map(driver => (
+                    <option key={driver} value={driver}>{driver}</option>
+                  ))}
+                </optgroup>
               </select>
 
               {currentDriver === 'Other' && (
