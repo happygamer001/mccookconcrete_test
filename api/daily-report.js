@@ -10,13 +10,13 @@ module.exports = async (req, res) => {
   try {
     const { 
       date, 
-      totalYards, 
+      yardsOut, 
       tripsOut, 
       drivers, 
       fuelReading, 
       issues, 
       issuePhoto,
-      submittedBy 
+      preparedBy 
     } = req.body;
 
     const notionApiKey = process.env.NOTION_API_KEY;
@@ -25,22 +25,9 @@ module.exports = async (req, res) => {
     if (!notionApiKey || !databaseId) {
       return res.status(500).json({ 
         success: false, 
-        error: 'Missing environment variables: NOTION_API_KEY or NOTION_DAILY_REPORT_DB_ID' 
+        error: 'Missing environment variables' 
       });
     }
-
-    // Build driver properties (up to 5 drivers)
-    const driverProps = {};
-    drivers.forEach((driver, index) => {
-      if (driver.name && driver.hours) {
-        driverProps[`Driver ${index + 1} Name`] = {
-          rich_text: [{ text: { content: driver.name } }]
-        };
-        driverProps[`Driver ${index + 1} Hours`] = {
-          number: parseFloat(driver.hours)
-        };
-      }
-    });
 
     // Build Notion page properties
     const properties = {
@@ -51,12 +38,11 @@ module.exports = async (req, res) => {
         date: { start: date }
       },
       'Total Yards Out': {
-        number: parseFloat(totalYards)
+        number: parseFloat(yardsOut)
       },
       'Trips Out': {
         number: parseFloat(tripsOut)
       },
-      ...driverProps,
       'End of Day Fuel Reading': {
         number: parseFloat(fuelReading)
       },
@@ -64,20 +50,34 @@ module.exports = async (req, res) => {
         rich_text: [{ text: { content: issues || 'N/A' } }]
       },
       'Submitted By': {
-        rich_text: [{ text: { content: submittedBy } }]
+        rich_text: [{ text: { content: preparedBy } }]
       }
     };
 
+    // Add driver info to first 5 driver slots
+    drivers.forEach((driver, index) => {
+      if (index < 5) {
+        const num = index + 1;
+        properties[`Driver ${num} Name`] = {
+          rich_text: [{ text: { content: driver.name } }]
+        };
+        
+        // Store hours as: 4 for half day, 8 for full day
+        const hours = driver.halfDay ? 4 : driver.fullDay ? 8 : 0;
+        if (hours > 0) {
+          properties[`Driver ${num} Hours`] = {
+            number: hours
+          };
+        }
+      }
+    });
+
     // Handle photo upload if provided
     if (issuePhoto) {
-      // Photo is base64 encoded - we need to upload it to Notion
-      // Notion API requires external URL, so we'll include it as a link
-      // For now, we'll store the base64 in the issues field with a note
-      // In production, you'd upload to cloud storage first
       properties['Issue Photos'] = {
         files: [{
           name: `issue-photo-${Date.now()}.jpg`,
-          external: { url: issuePhoto } // This will be a base64 data URL
+          external: { url: issuePhoto }
         }]
       };
     }
