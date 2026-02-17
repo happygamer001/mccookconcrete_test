@@ -1,11 +1,21 @@
-module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Credentials', true);
+export default async function handler(req, res) {
+  // CORS headers
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
   res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
 
-  if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  // Handle preflight
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
+  // Only allow POST
+  if (req.method !== 'POST') {
+    res.status(405).json({ error: 'Method not allowed' });
+    return;
+  }
 
   try {
     const { 
@@ -22,11 +32,17 @@ module.exports = async (req, res) => {
     const notionApiKey = process.env.NOTION_API_KEY;
     const databaseId = process.env.NOTION_DAILY_REPORT_DB_ID;
 
+    // Check environment variables
     if (!notionApiKey || !databaseId) {
-      return res.status(500).json({ 
+      res.status(500).json({ 
         success: false, 
-        error: 'Missing environment variables' 
+        error: 'Missing environment variables',
+        details: {
+          hasApiKey: !!notionApiKey,
+          hasDbId: !!databaseId
+        }
       });
+      return;
     }
 
     // Build Notion page properties
@@ -55,22 +71,24 @@ module.exports = async (req, res) => {
     };
 
     // Add driver info to first 5 driver slots
-    drivers.forEach((driver, index) => {
-      if (index < 5) {
-        const num = index + 1;
-        properties[`Driver ${num} Name`] = {
-          rich_text: [{ text: { content: driver.name } }]
-        };
-        
-        // Store hours as: 4 for half day, 8 for full day
-        const hours = driver.halfDay ? 4 : driver.fullDay ? 8 : 0;
-        if (hours > 0) {
-          properties[`Driver ${num} Hours`] = {
-            number: hours
+    if (drivers && drivers.length > 0) {
+      drivers.forEach((driver, index) => {
+        if (index < 5 && driver.name) {
+          const num = index + 1;
+          properties[`Driver ${num} Name`] = {
+            rich_text: [{ text: { content: driver.name } }]
           };
+          
+          // Store hours as: 4 for half day, 8 for full day
+          const hours = driver.halfDay ? 4 : driver.fullDay ? 8 : 0;
+          if (hours > 0) {
+            properties[`Driver ${num} Hours`] = {
+              number: hours
+            };
+          }
         }
-      }
-    });
+      });
+    }
 
     // Handle photo upload if provided
     if (issuePhoto) {
@@ -100,18 +118,22 @@ module.exports = async (req, res) => {
 
     if (!notionRes.ok) {
       console.error('Notion error:', JSON.stringify(notionData));
-      return res.status(500).json({ 
+      res.status(500).json({ 
         success: false, 
-        error: notionData.message || 'Notion API error' 
+        error: notionData.message || 'Notion API error',
+        details: notionData
       });
+      return;
     }
 
-    return res.status(200).json({ success: true, id: notionData.id });
+    res.status(200).json({ success: true, id: notionData.id });
 
   } catch (error) {
-    console.error('Server error:', error.message);
-    return res.status(500).json({ success: false, error: error.message });
+    console.error('Server error:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
-};
-
-
+}
