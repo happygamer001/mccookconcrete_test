@@ -38,7 +38,7 @@ function App() {
   const [isBatchManager, setIsBatchManager] = useState(false);  // ⬅️ ADD THIS LINE
   // Selection state
   const [selectedTruck, setSelectedTruck] = useState('');
-  const [trackingMode, setTrackingMode] = useState(null); // 'mileage' or 'fuel'
+  const [trackingMode, setTrackingMode] = useState(null); // 'mileage', 'fuel', or 'daily-report'
   
   // Mileage form state
   const [mileageData, setMileageData] = useState({
@@ -57,13 +57,39 @@ function App() {
     location: ''
   });
   
+  // ADD THESE TWO STATE BLOCKS ⬇️
+  // Daily Report form state
+  const [dailyReportData, setDailyReportData] = useState({
+    date: new Date().toISOString().split('T')[0],
+    yardsOut: '',
+    tripsOut: '',
+    fuelReading: '',
+    issues: '',
+    issuePhoto: null
+  });
+
+  // Driver work status - initialized with known drivers + 2 blanks
+  const [driverStatus, setDriverStatus] = useState({
+    'James': { halfDay: false, fullDay: false },
+    'Matt': { halfDay: false, fullDay: false },
+    'Calvin': { halfDay: false, fullDay: false },
+    'Jerron': { halfDay: false, fullDay: false },
+    'Nic': { halfDay: false, fullDay: false },
+    'Custom1': { name: '', halfDay: false, fullDay: false },
+    'Custom2': { name: '', halfDay: false, fullDay: false }
+  });
+  
+  
   // Feedback state
   const [submitStatus, setSubmitStatus] = useState(null);
 
   // Handle login
   const handleLogin = () => {
+    const isBatchMgr = BATCH_MANAGERS.includes(currentDriver);  // ⬅️ ADD THIS LINE
+    
     if (currentDriver && (currentDriver !== 'Other' || customDriverName.trim())) {
       setIsLoggedIn(true);
+      setIsBatchManager(isBatchMgr);  // ⬅️ ADD THIS LINE
     } else {
       alert('Please select a driver name');
     }
