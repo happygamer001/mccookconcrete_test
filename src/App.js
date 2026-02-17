@@ -638,7 +638,179 @@ function App() {
       </div>
     );
   }
+// ADD THIS ENTIRE SECTION ⬇️
+  // Daily Report form
+  if (trackingMode === 'daily-report') {
+    const predefinedDrivers = ['James', 'Matt', 'Calvin', 'Jerron', 'Nic'];
+    const customDrivers = ['Custom1', 'Custom2'];
+    
+    return (
+      <div className="App">
+        <div className="container">
+          <div className="header">
+            <button onClick={handleBack} className="btn-back">← Back</button>
+            <button onClick={handleLogout} className="btn-logout">Logout</button>
+          </div>
 
+          <h2>📋 MCI Daily Tab Sheet</h2>
+          <p className="subtitle">Prepared by: {currentDriver}</p>
+
+          <form onSubmit={submitDailyReport} className="tracking-form daily-report-form">
+            <div className="form-group">
+              <label htmlFor="report-date">Date:</label>
+              <input
+                id="report-date"
+                type="date"
+                value={dailyReportData.date}
+                onChange={(e) => setDailyReportData({...dailyReportData, date: e.target.value})}
+                required
+                className="date-input"
+              />
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="yards-out">Yards Out:</label>
+                <input
+                  id="yards-out"
+                  type="number"
+                  step="0.01"
+                  value={dailyReportData.yardsOut}
+                  onChange={(e) => setDailyReportData({...dailyReportData, yardsOut: e.target.value})}
+                  placeholder="e.g., 4"
+                  required
+                  className="number-input"
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="trips-out">Trips Out:</label>
+                <input
+                  id="trips-out"
+                  type="number"
+                  value={dailyReportData.tripsOut}
+                  onChange={(e) => setDailyReportData({...dailyReportData, tripsOut: e.target.value})}
+                  placeholder="e.g., 1"
+                  required
+                  className="number-input"
+                />
+              </div>
+            </div>
+
+            <div className="drivers-section">
+              <h3>Drivers:</h3>
+              
+              {predefinedDrivers.map(driver => (
+                <div key={driver} className="driver-row">
+                  <span className="driver-name">{driver}</span>
+                  <div className="driver-checkboxes">
+                    <label className="checkbox-container">
+                      <input
+                        type="checkbox"
+                        checked={driverStatus[driver].halfDay}
+                        onChange={() => handleDriverCheckbox(driver, 'halfDay')}
+                      />
+                      <span>Half Day</span>
+                    </label>
+                    <label className="checkbox-container">
+                      <input
+                        type="checkbox"
+                        checked={driverStatus[driver].fullDay}
+                        onChange={() => handleDriverCheckbox(driver, 'fullDay')}
+                      />
+                      <span>Full Day</span>
+                    </label>
+                  </div>
+                </div>
+              ))}
+
+              {customDrivers.map(key => (
+                <div key={key} className="driver-row custom-driver">
+                  <input
+                    type="text"
+                    value={driverStatus[key].name}
+                    onChange={(e) => handleCustomDriverName(key, e.target.value)}
+                    placeholder="Other driver name..."
+                    className="custom-driver-input"
+                  />
+                  <div className="driver-checkboxes">
+                    <label className="checkbox-container">
+                      <input
+                        type="checkbox"
+                        checked={driverStatus[key].halfDay}
+                        onChange={() => handleDriverCheckbox(key, 'halfDay')}
+                        disabled={!driverStatus[key].name}
+                      />
+                      <span>Half Day</span>
+                    </label>
+                    <label className="checkbox-container">
+                      <input
+                        type="checkbox"
+                        checked={driverStatus[key].fullDay}
+                        onChange={() => handleDriverCheckbox(key, 'fullDay')}
+                        disabled={!driverStatus[key].name}
+                      />
+                      <span>Full Day</span>
+                    </label>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="fuel-reading">End of Day Fuel Tank Reading:</label>
+              <input
+                id="fuel-reading"
+                type="number"
+                step="0.1"
+                value={dailyReportData.fuelReading}
+                onChange={(e) => setDailyReportData({...dailyReportData, fuelReading: e.target.value})}
+                placeholder="e.g., 14642"
+                required
+                className="number-input"
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="issues">Issues (Optional):</label>
+              <textarea
+                id="issues"
+                value={dailyReportData.issues}
+                onChange={(e) => setDailyReportData({...dailyReportData, issues: e.target.value})}
+                placeholder="Enter any issues or leave blank for N/A"
+                rows="4"
+                className="textarea-input"
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="issue-photo">Issue Photo (Optional):</label>
+              <input
+                id="issue-photo"
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoUpload}
+                className="file-input"
+              />
+              {dailyReportData.issuePhoto && (
+                <p className="file-preview">✅ Photo attached</p>
+              )}
+            </div>
+
+            <button type="submit" className="btn btn-primary btn-submit">
+              Submit Daily Report
+            </button>
+
+            {submitStatus && (
+              <div className={`status-message ${submitStatus.type}`}>
+                {submitStatus.message}
+              </div>
+            )}
+          </form>
+        </div>
+      </div>
+    );
+  }
   return null;
 }
 
