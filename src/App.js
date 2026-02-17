@@ -422,6 +422,15 @@ function App() {
               <h2>Track Fuel</h2>
               <p>Record fuel purchases</p>
             </button>
+                {/* ADD THIS BUTTON ⬇️ */}
+          {isBatchManager && (
+            <button 
+              onClick={() => handleModeSelect('daily-report')} 
+              className="btn btn-primary"
+            >
+              📋 Daily Report
+            </button>
+          )}
           </div>
         </div>
       </div>
