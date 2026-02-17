@@ -28,6 +28,7 @@ const DRIVERS = [
 const BATCH_MANAGERS = [
   'Batch Manager',
   'Supervisor'
+];
 const STATES = ['Nebraska', 'Kansas'];
 
 function App() {
