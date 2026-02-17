@@ -24,7 +24,10 @@ const DRIVERS = [
   'Jerron',
   'Other'
 ];
-
+// ADD THIS NEW CONSTANT ⬇️
+const BATCH_MANAGERS = [
+  'Batch Manager',
+  'Supervisor'
 const STATES = ['Nebraska', 'Kansas'];
 
 function App() {
@@ -32,7 +35,7 @@ function App() {
   const [currentDriver, setCurrentDriver] = useState('');
   const [customDriverName, setCustomDriverName] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  
+  const [isBatchManager, setIsBatchManager] = useState(false);  // ⬅️ ADD THIS LINE
   // Selection state
   const [selectedTruck, setSelectedTruck] = useState('');
   const [trackingMode, setTrackingMode] = useState(null); // 'mileage' or 'fuel'
