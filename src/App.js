@@ -135,7 +135,7 @@ function App() {
 
     try {
       // Call your backend API endpoint to submit to Notion
-      const response = await fetch('/api/mileage', {
+      const response = await fetch('https://mileage-tracker-final.vercel.app/api/mileage', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -180,7 +180,7 @@ function App() {
 
     try {
       // Call your backend API endpoint to submit to Notion
-      const response = await fetch('/api/fuel', {
+      const response = await fetch('https://mileage-tracker-final.vercel.app/api/fuel', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
