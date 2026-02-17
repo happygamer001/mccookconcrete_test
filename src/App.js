@@ -190,26 +190,79 @@ function App() {
     }
   };
 
-  // Submit fuel data to Notion
+ // Submit fuel data to Notion
   const submitFuelData = async (e) => {
-    e.preventDefault();
+    // ... existing fuel submit code ...
+  };
 
-    const driverName = currentDriver === 'Other' ? customDriverName : currentDriver;
+  // ADD ALL THESE HELPER FUNCTIONS ⬇️
+  // Helper functions for Daily Report
+  const handleDriverCheckbox = (driver, type) => {
+    setDriverStatus({
+      ...driverStatus,
+      [driver]: {
+        halfDay: type === 'halfDay' ? !driverStatus[driver].halfDay : false,
+        fullDay: type === 'fullDay' ? !driverStatus[driver].fullDay : false
+      }
+    });
+  };
+
+  const handleCustomDriverName = (key, name) => {
+    setDriverStatus({
+      ...driverStatus,
+      [key]: {
+        ...driverStatus[key],
+        name: name
+      }
+    });
+  };
+
+  const handlePhotoUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setDailyReportData({...dailyReportData, issuePhoto: reader.result});
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Submit daily report to Notion
+  const submitDailyReport = async (e) => {
+    e.preventDefault();
+    
+    const submitterName = isBatchManager ? currentDriver : customDriverName;
+    
+    // Build drivers array from driver status
+    const drivers = [];
+    Object.keys(driverStatus).forEach(key => {
+      const status = driverStatus[key];
+      const driverName = key.startsWith('Custom') ? status.name : key;
+      
+      if (driverName && (status.halfDay || status.fullDay)) {
+        drivers.push({
+          name: driverName,
+          halfDay: status.halfDay,
+          fullDay: status.fullDay
+        });
+      }
+    });
     
     const payload = {
-      driver: driverName,
-      truck: selectedTruck,
-      date: fuelData.date,
-      state: fuelData.state,
-      gallons: parseFloat(fuelData.gallons),
-      cost: parseFloat(fuelData.cost),
-      location: fuelData.location,
+      date: dailyReportData.date,
+      yardsOut: parseFloat(dailyReportData.yardsOut),
+      tripsOut: parseFloat(dailyReportData.tripsOut),
+      drivers: drivers,
+      fuelReading: parseFloat(dailyReportData.fuelReading),
+      issues: dailyReportData.issues || 'N/A',
+      issuePhoto: dailyReportData.issuePhoto,
+      preparedBy: submitterName,
       timestamp: new Date().toISOString()
     };
 
     try {
-      // Call your backend API endpoint to submit to Notion
-      const response = await fetch('https://mileage-tracker-final.vercel.app/api/fuel', {
+      const response = await fetch('https://mileage-tracker-final.vercel.app/api/daily-report', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -218,20 +271,33 @@ function App() {
       });
 
       if (response.ok) {
-        setSubmitStatus({ type: 'success', message: 'Fuel data submitted successfully!' });
+        setSubmitStatus({ type: 'success', message: '✅ Daily report submitted successfully!' });
+        
         // Reset form
-        setFuelData({
+        setDailyReportData({
           date: new Date().toISOString().split('T')[0],
-          state: 'Nebraska',
-          gallons: '',
-          cost: '',
-          location: ''
+          yardsOut: '',
+          tripsOut: '',
+          fuelReading: '',
+          issues: '',
+          issuePhoto: null
+        });
+        
+        // Reset driver statuses
+        setDriverStatus({
+          'James': { halfDay: false, fullDay: false },
+          'Matt': { halfDay: false, fullDay: false },
+          'Calvin': { halfDay: false, fullDay: false },
+          'Jerron': { halfDay: false, fullDay: false },
+          'Nic': { halfDay: false, fullDay: false },
+          'Custom1': { name: '', halfDay: false, fullDay: false },
+          'Custom2': { name: '', halfDay: false, fullDay: false }
         });
       } else {
         throw new Error('Failed to submit data');
       }
     } catch (error) {
-      console.error('Error submitting fuel:', error);
+      console.error('Error submitting daily report:', error);
       setSubmitStatus({ type: 'error', message: 'Failed to submit data. Please try again.' });
     }
   };
