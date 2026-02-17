@@ -4,18 +4,9 @@
     {
       "src": "package.json",
       "use": "@vercel/static-build",
-      "config": { "distDir": "build" }
-    },
-    {
-      "src": "api/*.js",
-      "use": "@vercel/node"
+      "config": {
+        "distDir": "build"
+      }
     }
-  ],
-  "routes": [
-    { "src": "/api/mileage", "dest": "/api/mileage.js" },
-    { "src": "/api/fuel", "dest": "/api/fuel.js" },
-    { "src": "/api/test", "dest": "/api/test.js" },
-    { "handle": "filesystem" },
-    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
