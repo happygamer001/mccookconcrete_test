@@ -1,20 +1,16 @@
-export default async function handler(req, res) {
+const handler = async (req, res) => {
   // CORS headers
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
   res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
 
-  // Handle preflight
   if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
+    return res.status(200).end();
   }
 
-  // Only allow POST
   if (req.method !== 'POST') {
-    res.status(405).json({ error: 'Method not allowed' });
-    return;
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
@@ -32,20 +28,13 @@ export default async function handler(req, res) {
     const notionApiKey = process.env.NOTION_API_KEY;
     const databaseId = process.env.NOTION_DAILY_REPORT_DB_ID;
 
-    // Check environment variables
     if (!notionApiKey || !databaseId) {
-      res.status(500).json({ 
+      return res.status(500).json({ 
         success: false, 
-        error: 'Missing environment variables',
-        details: {
-          hasApiKey: !!notionApiKey,
-          hasDbId: !!databaseId
-        }
+        error: 'Missing environment variables'
       });
-      return;
     }
 
-    // Build Notion page properties
     const properties = {
       'Name': {
         title: [{ text: { content: `Daily Report - ${date}` } }]
@@ -70,7 +59,6 @@ export default async function handler(req, res) {
       }
     };
 
-    // Add driver info to first 5 driver slots
     if (drivers && drivers.length > 0) {
       drivers.forEach((driver, index) => {
         if (index < 5 && driver.name) {
@@ -79,18 +67,14 @@ export default async function handler(req, res) {
             rich_text: [{ text: { content: driver.name } }]
           };
           
-          // Store hours as: 4 for half day, 8 for full day
           const hours = driver.halfDay ? 4 : driver.fullDay ? 8 : 0;
           if (hours > 0) {
-            properties[`Driver ${num} Hours`] = {
-              number: hours
-            };
+            properties[`Driver ${num} Hours`] = { number: hours };
           }
         }
       });
     }
 
-    // Handle photo upload if provided
     if (issuePhoto) {
       properties['Issue Photos'] = {
         files: [{
@@ -100,7 +84,6 @@ export default async function handler(req, res) {
       };
     }
 
-    // Create Notion page
     const notionRes = await fetch('https://api.notion.com/v1/pages', {
       method: 'POST',
       headers: {
@@ -118,22 +101,18 @@ export default async function handler(req, res) {
 
     if (!notionRes.ok) {
       console.error('Notion error:', JSON.stringify(notionData));
-      res.status(500).json({ 
+      return res.status(500).json({ 
         success: false, 
-        error: notionData.message || 'Notion API error',
-        details: notionData
+        error: notionData.message || 'Notion API error'
       });
-      return;
     }
 
-    res.status(200).json({ success: true, id: notionData.id });
+    return res.status(200).json({ success: true, id: notionData.id });
 
   } catch (error) {
     console.error('Server error:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: error.message,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-    });
+    return res.status(500).json({ success: false, error: error.message });
   }
-}
+};
+
+module.exports = handler;
