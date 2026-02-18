@@ -24,11 +24,12 @@ const DRIVERS = [
   'Jerron',
   'Other'
 ];
-// ADD THIS NEW CONSTANT ⬇️
+
 const BATCH_MANAGERS = [
   'Batch Manager',
   'Supervisor'
 ];
+
 const STATES = ['Nebraska', 'Kansas'];
 
 function App() {
@@ -36,7 +37,8 @@ function App() {
   const [currentDriver, setCurrentDriver] = useState('');
   const [customDriverName, setCustomDriverName] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isBatchManager, setIsBatchManager] = useState(false);  // ⬅️ ADD THIS LINE
+  const [isBatchManager, setIsBatchManager] = useState(false);
+  
   // Selection state
   const [selectedTruck, setSelectedTruck] = useState('');
   const [trackingMode, setTrackingMode] = useState(null); // 'mileage', 'fuel', or 'daily-report'
@@ -58,7 +60,6 @@ function App() {
     location: ''
   });
   
-  // ADD THESE TWO STATE BLOCKS ⬇️
   // Daily Report form state
   const [dailyReportData, setDailyReportData] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -80,17 +81,16 @@ function App() {
     'Custom2': { name: '', halfDay: false, fullDay: false }
   });
   
-  
   // Feedback state
   const [submitStatus, setSubmitStatus] = useState(null);
 
   // Handle login
   const handleLogin = () => {
-    const isBatchMgr = BATCH_MANAGERS.includes(currentDriver);  // ⬅️ ADD THIS LINE
+    const isBatchMgr = BATCH_MANAGERS.includes(currentDriver);
     
     if (currentDriver && (currentDriver !== 'Other' || customDriverName.trim())) {
       setIsLoggedIn(true);
-      setIsBatchManager(isBatchMgr);  // ⬅️ ADD THIS LINE
+      setIsBatchManager(isBatchMgr);
     } else {
       alert('Please select a driver name');
     }
@@ -164,7 +164,6 @@ function App() {
     };
 
     try {
-      // Call your backend API endpoint to submit to Notion
       const response = await fetch('https://mileage-tracker-final.vercel.app/api/mileage', {
         method: 'POST',
         headers: {
@@ -191,12 +190,55 @@ function App() {
     }
   };
 
- // Submit fuel data to Notion
+  // Submit fuel data to Notion
   const submitFuelData = async (e) => {
-    // ... existing fuel submit code ...
+    e.preventDefault();
+
+    const driverName = currentDriver === 'Other' ? customDriverName : currentDriver;
+    
+    const payload = {
+      driver: driverName,
+      truck: selectedTruck,
+      date: fuelData.date,
+      state: fuelData.state,
+      gallons: parseFloat(fuelData.gallons),
+      cost: parseFloat(fuelData.cost),
+      location: fuelData.location || 'N/A',
+      timestamp: new Date().toISOString()
+    };
+
+    try {
+      const response = await fetch('https://mileage-tracker-final.vercel.app/api/fuel', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        alert('Fuel data submitted successfully! Redirecting to mileage form...');
+        
+        // Reset fuel form
+        setFuelData({
+          date: new Date().toISOString().split('T')[0],
+          state: 'Nebraska',
+          gallons: '',
+          cost: '',
+          location: ''
+        });
+        
+        // Redirect to mileage form
+        setTrackingMode('mileage');
+      } else {
+        throw new Error('Failed to submit data');
+      }
+    } catch (error) {
+      console.error('Error submitting fuel:', error);
+      setSubmitStatus({ type: 'error', message: 'Failed to submit data. Please try again.' });
+    }
   };
 
-  // ADD ALL THESE HELPER FUNCTIONS ⬇️
   // Helper functions for Daily Report
   const handleDriverCheckbox = (driver, type) => {
     setDriverStatus({
@@ -322,7 +364,6 @@ function App() {
               >
                 <option value="">-- Select Your Name --</option>
                 
-                {/* ADD THIS SECTION ⬇️ */}
                 <optgroup label="Batch Managers">
                   {BATCH_MANAGERS.map(manager => (
                     <option key={manager} value={manager}>{manager}</option>
@@ -423,15 +464,17 @@ function App() {
               <h2>Track Fuel</h2>
               <p>Record fuel purchases</p>
             </button>
-                {/* ADD THIS BUTTON ⬇️ */}
-          {isBatchManager && (
-            <button 
-              onClick={() => handleModeSelect('daily-report')} 
-              className="btn btn-primary"
-            >
-              📋 Daily Report
-            </button>
-          )}
+
+            {isBatchManager && (
+              <button 
+                onClick={() => handleModeSelect('daily-report')} 
+                className="mode-card"
+              >
+                <div className="mode-icon">📋</div>
+                <h2>Daily Report</h2>
+                <p>Submit batch manager daily report</p>
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -639,7 +682,7 @@ function App() {
       </div>
     );
   }
-// ADD THIS ENTIRE SECTION ⬇️
+
   // Daily Report form
   if (trackingMode === 'daily-report') {
     const predefinedDrivers = ['James', 'Matt', 'Calvin', 'Jerron', 'Nic'];
@@ -812,6 +855,7 @@ function App() {
       </div>
     );
   }
+
   return null;
 }
 
