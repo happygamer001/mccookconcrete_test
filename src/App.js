@@ -217,8 +217,6 @@ function App() {
       });
 
       if (response.ok) {
-        alert('Fuel data submitted successfully! Redirecting to mileage form...');
-        
         // Reset fuel form
         setFuelData({
           date: new Date().toISOString().split('T')[0],
@@ -228,7 +226,7 @@ function App() {
           location: ''
         });
         
-        // Redirect to mileage form
+        // Seamlessly redirect to mileage form
         setTrackingMode('mileage');
       } else {
         throw new Error('Failed to submit data');
