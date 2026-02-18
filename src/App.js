@@ -651,6 +651,7 @@ function App() {
                 <input
                   id="mileage-start"
                   type="number"
+                  inputMode="decimal"
                   step="0.1"
                   value={mileageData.mileageStart}
                   onChange={(e) => setMileageData({...mileageData, mileageStart: e.target.value})}
@@ -667,6 +668,7 @@ function App() {
                 <input
                   id="mileage-end"
                   type="number"
+                  inputMode="decimal"
                   step="0.1"
                   value={mileageData.mileageEnd}
                   onChange={(e) => setMileageData({...mileageData, mileageEnd: e.target.value})}
@@ -750,6 +752,7 @@ function App() {
               <input
                 id="fuel-gallons"
                 type="number"
+                inputMode="decimal"
                 step="0.01"
                 value={fuelData.gallons}
                 onChange={(e) => setFuelData({...fuelData, gallons: e.target.value})}
@@ -766,6 +769,7 @@ function App() {
                   <input
                     id="fuel-cost"
                     type="number"
+                    inputMode="decimal"
                     step="0.01"
                     value={fuelData.cost}
                     onChange={(e) => setFuelData({...fuelData, cost: e.target.value})}
