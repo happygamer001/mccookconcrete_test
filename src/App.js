@@ -44,6 +44,9 @@ function App() {
   const [selectedTruck, setSelectedTruck] = useState('');
   const [trackingMode, setTrackingMode] = useState(null); // 'mileage', 'fuel', or 'daily-report'
   
+  // Animation state
+  const [animationClass, setAnimationClass] = useState('');
+  
   // Mileage form state
   const [mileageData, setMileageData] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -152,17 +155,20 @@ function App() {
 
   // Handle truck selection
   const handleTruckSelect = (truck) => {
+    setAnimationClass('slide-in-right');
     setSelectedTruck(truck);
   };
 
   // Handle mode selection
   const handleModeSelect = (mode) => {
+    setAnimationClass('slide-in-right');
     setTrackingMode(mode);
     setSubmitStatus(null);
   };
 
   // Handle back button
   const handleBack = () => {
+    setAnimationClass('slide-in-left');
     if (trackingMode) {
       setTrackingMode(null);
       setIncompleteEntry(null);
@@ -311,7 +317,8 @@ function App() {
           fuelPhoto: null
         });
         
-        // Seamlessly redirect to mileage form
+        // Seamlessly redirect to mileage form with animation
+        setAnimationClass('slide-in-right');
         setTrackingMode('mileage');
       } else {
         throw new Error('Failed to submit data');
@@ -500,7 +507,7 @@ function App() {
     const displayName = currentDriver === 'Other' ? customDriverName : currentDriver;
     return (
       <div className="App">
-        <div className="container">
+        <div className={`container ${animationClass}`}>
           <div className="header">
             <h1>Select Truck</h1>
             <p className="user-info">Driver: {displayName}</p>
@@ -531,7 +538,7 @@ function App() {
     const displayName = currentDriver === 'Other' ? customDriverName : currentDriver;
     return (
       <div className="App">
-        <div className="container">
+        <div className={`container ${animationClass}`}>
           <div className="header">
             <button onClick={handleBack} className="btn btn-back">
               ← Back
@@ -584,7 +591,7 @@ function App() {
 
     return (
       <div className="App">
-        <div className="container">
+        <div className={`container ${animationClass}`}>
           <div className="header">
             <button onClick={handleBack} className="btn btn-back">
               ← Back
@@ -701,7 +708,7 @@ function App() {
 
     return (
       <div className="App">
-        <div className="container">
+        <div className={`container ${animationClass}`}>
           <div className="header">
             <button onClick={handleBack} className="btn btn-back">
               ← Back
@@ -824,7 +831,7 @@ function App() {
     
     return (
       <div className="App">
-        <div className="container">
+        <div className={`container ${animationClass}`}>
           <div className="header">
             <button onClick={handleBack} className="btn-back">← Back</button>
             <button onClick={handleLogout} className="btn-logout">Logout</button>
