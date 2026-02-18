@@ -105,12 +105,12 @@ module.exports = async (req, res) => {
 
    const notionData = await notionRes.json();
 
-    if (!notionRes.ok) {
-      console.error('Notion error:', JSON.stringify(notionData));
-      return res.status(500).json({ 
-        success: false, 
-        error: notionData.message || 'Notion API error',
-        details: notionData
+        if (!notionRes.ok) {
+          console.error('Notion error:', JSON.stringify(notionData));
+          return res.status(500).json({ 
+            success: false, 
+            error: notionData.message || 'Notion API error',
+            details: notionData
       });
     }
 
