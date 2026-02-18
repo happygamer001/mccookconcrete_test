@@ -12,7 +12,8 @@ const TRUCKS = [
   '2504',
   '2507',
   '2204',
-  '3743'
+  '3743',
+  'Semi'
 ];
 
 const DRIVERS = [
@@ -61,7 +62,8 @@ function App() {
     state: 'Nebraska',
     gallons: '',
     cost: '',
-    location: ''
+    location: '',
+    fuelPhoto: null
   });
   
   // Daily Report form state
@@ -275,6 +277,7 @@ function App() {
     e.preventDefault();
 
     const driverName = currentDriver === 'Other' ? customDriverName : currentDriver;
+    const isSemi = selectedTruck === 'Semi';
     
     const payload = {
       driver: driverName,
@@ -282,8 +285,9 @@ function App() {
       date: fuelData.date,
       state: fuelData.state,
       gallons: parseFloat(fuelData.gallons),
-      cost: parseFloat(fuelData.cost),
-      location: fuelData.location || 'N/A',
+      cost: isSemi ? parseFloat(fuelData.cost) : null,
+      location: isSemi ? (fuelData.location || 'N/A') : null,
+      fuelPhoto: isSemi ? fuelData.fuelPhoto : null,
       timestamp: new Date().toISOString()
     };
 
@@ -303,7 +307,8 @@ function App() {
           state: 'Nebraska',
           gallons: '',
           cost: '',
-          location: ''
+          location: '',
+          fuelPhoto: null
         });
         
         // Seamlessly redirect to mileage form
@@ -344,6 +349,17 @@ function App() {
       const reader = new FileReader();
       reader.onloadend = () => {
         setDailyReportData({...dailyReportData, issuePhoto: reader.result});
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleFuelPhotoUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFuelData({...fuelData, fuelPhoto: reader.result});
       };
       reader.readAsDataURL(file);
     }
@@ -678,7 +694,8 @@ function App() {
   // Render fuel tracking form
   if (trackingMode === 'fuel') {
     const displayName = currentDriver === 'Other' ? customDriverName : currentDriver;
-    const costPerGallon = fuelData.gallons && fuelData.cost
+    const isSemi = selectedTruck === 'Semi';
+    const costPerGallon = isSemi && fuelData.gallons && fuelData.cost
       ? (parseFloat(fuelData.cost) / parseFloat(fuelData.gallons)).toFixed(2)
       : 0;
 
@@ -735,36 +752,54 @@ function App() {
               />
             </div>
 
-            <div className="form-group">
-              <label htmlFor="fuel-cost">Total Cost ($):</label>
-              <input
-                id="fuel-cost"
-                type="number"
-                step="0.01"
-                value={fuelData.cost}
-                onChange={(e) => setFuelData({...fuelData, cost: e.target.value})}
-                placeholder="Enter total cost"
-                required
-                className="text-input"
-              />
-            </div>
+            {isSemi && (
+              <>
+                <div className="form-group">
+                  <label htmlFor="fuel-cost">Total Cost ($):</label>
+                  <input
+                    id="fuel-cost"
+                    type="number"
+                    step="0.01"
+                    value={fuelData.cost}
+                    onChange={(e) => setFuelData({...fuelData, cost: e.target.value})}
+                    placeholder="Enter total cost"
+                    required
+                    className="text-input"
+                  />
+                </div>
 
-            <div className="form-group">
-              <label htmlFor="fuel-location">Location (Optional):</label>
-              <input
-                id="fuel-location"
-                type="text"
-                value={fuelData.location}
-                onChange={(e) => setFuelData({...fuelData, location: e.target.value})}
-                placeholder="e.g., Shell - McCook"
-                className="text-input"
-              />
-            </div>
+                <div className="form-group">
+                  <label htmlFor="fuel-location">Location (Optional):</label>
+                  <input
+                    id="fuel-location"
+                    type="text"
+                    value={fuelData.location}
+                    onChange={(e) => setFuelData({...fuelData, location: e.target.value})}
+                    placeholder="e.g., Shell - McCook"
+                    className="text-input"
+                  />
+                </div>
 
-            {costPerGallon > 0 && (
-              <div className="calculation-display">
-                <strong>Price per Gallon:</strong> ${costPerGallon}
-              </div>
+                <div className="form-group">
+                  <label htmlFor="fuel-photo">Receipt Photo (Optional):</label>
+                  <input
+                    id="fuel-photo"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFuelPhotoUpload}
+                    className="file-input"
+                  />
+                  {fuelData.fuelPhoto && (
+                    <p className="file-preview">✅ Photo attached</p>
+                  )}
+                </div>
+
+                {costPerGallon > 0 && (
+                  <div className="calculation-display">
+                    <strong>Price per Gallon:</strong> ${costPerGallon}
+                  </div>
+                )}
+              </>
             )}
 
             <button type="submit" className="btn btn-primary btn-submit">
