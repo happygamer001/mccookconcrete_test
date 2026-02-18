@@ -116,7 +116,7 @@ module.exports = async (req, res) => {
 
     return res.status(200).json({ success: true, id: notionData.id });
 
-  }} catch (error) {
+  } catch (error) {
     console.error('Server error:', error);
     return res.status(500).json({ 
       success: false, 
