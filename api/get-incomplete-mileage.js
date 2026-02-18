@@ -39,21 +39,21 @@ module.exports = async (req, res) => {
         filter: {
           and: [
             {
-              property: 'Driver',
-              rich_text: {
+              property: 'Driver Name',
+              select: {
                 equals: driver
               }
             },
             {
-              property: 'Truck',
-              rich_text: {
+              property: 'Truck Number',
+              select: {
                 equals: truck
               }
             },
             {
               property: 'Status',
-              select: {
-                equals: 'In Progress'
+              status: {
+                equals: 'In progress'
               }
             }
           ]
@@ -72,7 +72,7 @@ module.exports = async (req, res) => {
 
     if (!notionRes.ok) {
       console.error('Notion error:', JSON.stringify(data));
-      return res.status(500).json({ error: 'Notion API error' });
+      return res.status(500).json({ error: 'Notion API error', details: data });
     }
 
     // Return the most recent incomplete entry, if any
@@ -84,8 +84,8 @@ module.exports = async (req, res) => {
         entry: {
           id: entry.id,
           date: entry.properties.Date?.date?.start || '',
-          state: entry.properties.State?.rich_text?.[0]?.text?.content || '',
-          mileageStart: entry.properties['Starting Mileage']?.number || 0,
+          state: entry.properties.State?.select?.name || '',
+          mileageStart: entry.properties['Mileage Start']?.number || 0,
           createdTime: entry.created_time
         }
       });
