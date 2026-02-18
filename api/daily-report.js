@@ -31,7 +31,13 @@ module.exports = async (req, res) => {
     if (!notionApiKey || !databaseId) {
       return res.status(500).json({ 
         success: false, 
-        error: 'Missing environment variables'
+        error: 'Missing environment variables',
+        debug: {
+          hasApiKey: !!notionApiKey,
+          hasDbId: !!databaseId,
+          apiKeyLength: notionApiKey?.length || 0,
+          dbIdLength: databaseId?.length || 0
+        }
       });
     }
 
