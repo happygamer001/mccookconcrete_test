@@ -445,7 +445,7 @@ function App() {
       <div className="App">
         <div className="container">
           <div className="login-screen">
-            <h1>McCook Concrete Inc.</h1>
+            <img src="/mccook-logo.png" alt="McCook Concrete Inc." className="company-logo" />
             <h2>Mileage & Fuel Tracker</h2>
             
             <div className="login-form">
