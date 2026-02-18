@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import './App.css';
 
 // Truck and Driver data
@@ -88,15 +88,8 @@ function App() {
   // Feedback state
   const [submitStatus, setSubmitStatus] = useState(null);
 
-  // Check for incomplete entries when entering mileage mode
-  useEffect(() => {
-    if (trackingMode === 'mileage' && selectedTruck) {
-      checkForIncompleteEntry();
-    }
-  }, [trackingMode, selectedTruck]);
-
-  // Check for incomplete mileage entry
-  const checkForIncompleteEntry = async () => {
+  // Check for incomplete mileage entry - wrapped in useCallback
+  const checkForIncompleteEntry = useCallback(async () => {
     setCheckingIncomplete(true);
     const driverName = currentDriver === 'Other' ? customDriverName : currentDriver;
     
@@ -124,7 +117,14 @@ function App() {
     } finally {
       setCheckingIncomplete(false);
     }
-  };
+  }, [currentDriver, customDriverName, selectedTruck]);
+
+  // Check for incomplete entries when entering mileage mode
+  useEffect(() => {
+    if (trackingMode === 'mileage' && selectedTruck) {
+      checkForIncompleteEntry();
+    }
+  }, [trackingMode, selectedTruck, checkForIncompleteEntry]);
 
   // Handle login
   const handleLogin = () => {
