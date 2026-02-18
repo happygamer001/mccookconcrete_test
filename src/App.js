@@ -739,7 +739,7 @@ function App() {
             </div>
 
             <div className="form-group">
-              <label htmlFor="fuel-gallons">Gallons Purchased:</label>
+              <label htmlFor="fuel-gallons">{isSemi ? 'Gallons Purchased:' : 'Gallons Filled:'}</label>
               <input
                 id="fuel-gallons"
                 type="number"
