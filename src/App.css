@@ -152,6 +152,12 @@ body {
   cursor: pointer;
   transition: all 0.3s ease;
   text-align: center;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.btn:active {
+  transform: scale(0.98);
 }
 
 .btn-primary {
@@ -299,12 +305,18 @@ body {
   cursor: pointer;
   transition: all 0.3s ease;
   text-align: center;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
 }
 
 .truck-card:hover {
   border-color: #FF7E26;
   transform: translateY(-5px);
   box-shadow: 0 10px 30px rgba(255, 126, 38, 0.2);
+}
+
+.truck-card:active {
+  transform: translateY(-2px);
 }
 
 .truck-icon {
@@ -334,12 +346,18 @@ body {
   cursor: pointer;
   transition: all 0.3s ease;
   text-align: center;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
 }
 
 .mode-card:hover {
   border-color: #FF7E26;
   transform: translateY(-5px);
   box-shadow: 0 15px 40px rgba(255, 126, 38, 0.2);
+}
+
+.mode-card:active {
+  transform: translateY(-2px);
 }
 
 .mode-icon {
@@ -538,8 +556,188 @@ body {
 
 /* Responsive Design */
 @media (max-width: 768px) {
+  body {
+    padding: 10px;
+  }
+
+  .container {
+    padding: 25px;
+    border-radius: 15px;
+  }
+
+  .company-logo {
+    max-width: 250px;
+    margin-bottom: 20px;
+  }
+
+  .header h1 {
+    font-size: 28px;
+  }
+
+  .user-info {
+    font-size: 18px;
+  }
+
+  .login-screen h1 {
+    font-size: 32px;
+  }
+
+  .login-screen h2 {
+    font-size: 22px;
+    margin-bottom: 30px;
+  }
+
+  /* Bigger buttons for easier tapping */
+  .btn {
+    padding: 18px 32px;
+    font-size: 18px;
+    min-height: 56px;
+  }
+
+  .btn-back,
+  .btn-logout {
+    padding: 12px 20px;
+    font-size: 16px;
+    min-height: 48px;
+  }
+
+  /* Bigger input fields */
+  .text-input,
+  .select-input,
+  .number-input,
+  .date-input {
+    padding: 16px 18px;
+    font-size: 18px;
+    min-height: 56px;
+  }
+
+  .textarea-input {
+    padding: 16px 18px;
+    font-size: 18px;
+    min-height: 120px;
+  }
+
+  .file-input {
+    padding: 16px 18px;
+    font-size: 18px;
+    min-height: 56px;
+  }
+
+  /* Labels more prominent */
+  .form-group label {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  /* Truck grid optimized for mobile */
+  .truck-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+  }
+
+  .truck-card {
+    padding: 25px 15px;
+    min-height: 120px;
+  }
+
+  .truck-icon {
+    font-size: 42px;
+  }
+
+  .truck-name {
+    font-size: 15px;
+  }
+
+  /* Mode cards stack on mobile */
+  .mode-selection {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .mode-card {
+    padding: 35px 25px;
+  }
+
+  .mode-icon {
+    font-size: 56px;
+  }
+
+  .mode-card h2 {
+    font-size: 22px;
+  }
+
+  .mode-card p {
+    font-size: 17px;
+  }
+
+  /* Form improvements */
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .tracking-form {
+    gap: 25px;
+  }
+
+  /* Calculation display bigger */
+  .calculation-display {
+    font-size: 22px;
+    padding: 22px;
+  }
+
+  /* Status messages more prominent */
+  .status-message {
+    font-size: 17px;
+    padding: 18px;
+  }
+
+  /* Driver section optimized */
+  .driver-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+    padding: 18px;
+  }
+
+  .driver-name {
+    font-size: 17px;
+    font-weight: 700;
+  }
+
+  .driver-checkboxes {
+    width: 100%;
+    justify-content: space-around;
+  }
+
+  .checkbox-container {
+    font-size: 16px;
+  }
+
+  .checkbox-container input[type="checkbox"] {
+    width: 24px;
+    height: 24px;
+  }
+
+  /* Incomplete entry notice */
+  .incomplete-entry-notice {
+    padding: 18px;
+  }
+
+  .incomplete-entry-notice strong {
+    font-size: 19px;
+  }
+
+  .incomplete-entry-notice p {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
   .container {
     padding: 20px;
+    border-radius: 12px;
   }
 
   .company-logo {
@@ -558,55 +756,27 @@ body {
     font-size: 20px;
   }
 
+  /* Single column truck grid on small phones */
   .truck-grid {
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 15px;
+    grid-template-columns: 1fr;
+    gap: 12px;
   }
 
-  .mode-selection {
-    grid-template-columns: 1fr;
-    gap: 20px;
+  .truck-card {
+    padding: 20px 15px;
+  }
+
+  /* Buttons still big enough to tap */
+  .btn {
+    padding: 16px 28px;
+    font-size: 17px;
+  }
+
+  .mode-card {
+    padding: 30px 20px;
   }
 
   .mode-icon {
     font-size: 48px;
-  }
-
-  .mode-card h2 {
-    font-size: 20px;
-  }
-
-  .form-row {
-    grid-template-columns: 1fr;
-  }
-
-  .driver-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 15px;
-  }
-
-  .driver-checkboxes {
-    width: 100%;
-    justify-content: space-around;
-  }
-}
-
-@media (max-width: 480px) {
-  .container {
-    padding: 15px;
-  }
-
-  .company-logo {
-    max-width: 180px;
-  }
-
-  .truck-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .btn {
-    padding: 12px 20px;
-    font-size: 14px;
   }
 }
