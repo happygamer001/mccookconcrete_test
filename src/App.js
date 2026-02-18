@@ -874,7 +874,8 @@ function App() {
                     value={driverStatus[key].name}
                     onChange={(e) => handleCustomDriverName(key, e.target.value)}
                     placeholder="Other driver name..."
-                    className="custom-driver-input/>
+                    className="custom-driver-input"
+                  />
                   <div className="driver-checkboxes">
                     <label className="checkbox-container">
                       <input
