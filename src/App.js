@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 
 // Truck and Driver data
@@ -51,6 +51,10 @@ function App() {
     mileageEnd: ''
   });
   
+  // Incomplete entry state
+  const [incompleteEntry, setIncompleteEntry] = useState(null);
+  const [checkingIncomplete, setCheckingIncomplete] = useState(false);
+  
   // Fuel form state
   const [fuelData, setFuelData] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -84,6 +88,44 @@ function App() {
   // Feedback state
   const [submitStatus, setSubmitStatus] = useState(null);
 
+  // Check for incomplete entries when entering mileage mode
+  useEffect(() => {
+    if (trackingMode === 'mileage' && selectedTruck) {
+      checkForIncompleteEntry();
+    }
+  }, [trackingMode, selectedTruck]);
+
+  // Check for incomplete mileage entry
+  const checkForIncompleteEntry = async () => {
+    setCheckingIncomplete(true);
+    const driverName = currentDriver === 'Other' ? customDriverName : currentDriver;
+    
+    try {
+      const response = await fetch(
+        `https://mileage-tracker-final.vercel.app/api/get-incomplete-mileage?driver=${encodeURIComponent(driverName)}&truck=${encodeURIComponent(selectedTruck)}`
+      );
+      
+      const data = await response.json();
+      
+      if (data.found) {
+        setIncompleteEntry(data.entry);
+        // Pre-fill the form with the incomplete entry data
+        setMileageData({
+          date: data.entry.date,
+          state: data.entry.state,
+          mileageStart: data.entry.mileageStart.toString(),
+          mileageEnd: ''
+        });
+      } else {
+        setIncompleteEntry(null);
+      }
+    } catch (error) {
+      console.error('Error checking for incomplete entry:', error);
+    } finally {
+      setCheckingIncomplete(false);
+    }
+  };
+
   // Handle login
   const handleLogin = () => {
     const isBatchMgr = BATCH_MANAGERS.includes(currentDriver);
@@ -103,6 +145,7 @@ function App() {
     setCustomDriverName('');
     setSelectedTruck('');
     setTrackingMode(null);
+    setIncompleteEntry(null);
   };
 
   // Handle truck selection
@@ -120,6 +163,7 @@ function App() {
   const handleBack = () => {
     if (trackingMode) {
       setTrackingMode(null);
+      setIncompleteEntry(null);
       // Reset forms
       setMileageData({
         date: new Date().toISOString().split('T')[0],
@@ -143,50 +187,86 @@ function App() {
   const submitMileageData = async (e) => {
     e.preventDefault();
     
-    const totalMiles = parseFloat(mileageData.mileageEnd) - parseFloat(mileageData.mileageStart);
-    
-    if (totalMiles < 0) {
-      alert('Ending mileage must be greater than starting mileage');
-      return;
-    }
-
     const driverName = currentDriver === 'Other' ? customDriverName : currentDriver;
     
-    const payload = {
-      driver: driverName,
-      truck: selectedTruck,
-      date: mileageData.date,
-      state: mileageData.state,
-      mileageStart: parseFloat(mileageData.mileageStart),
-      mileageEnd: parseFloat(mileageData.mileageEnd),
-      totalMiles: totalMiles,
-      timestamp: new Date().toISOString()
-    };
-
-    try {
-      const response = await fetch('https://mileage-tracker-final.vercel.app/api/mileage', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (response.ok) {
-        setSubmitStatus({ type: 'success', message: 'Mileage data submitted successfully!' });
-        // Reset form
-        setMileageData({
-          date: new Date().toISOString().split('T')[0],
-          state: 'Nebraska',
-          mileageStart: '',
-          mileageEnd: ''
-        });
-      } else {
-        throw new Error('Failed to submit data');
+    // If completing an existing entry
+    if (incompleteEntry) {
+      const totalMiles = parseFloat(mileageData.mileageEnd) - parseFloat(mileageData.mileageStart);
+      
+      if (totalMiles < 0) {
+        alert('Ending mileage must be greater than starting mileage');
+        return;
       }
-    } catch (error) {
-      console.error('Error submitting mileage:', error);
-      setSubmitStatus({ type: 'error', message: 'Failed to submit data. Please try again.' });
+
+      try {
+        // Update the existing Notion entry
+        const response = await fetch('https://mileage-tracker-final.vercel.app/api/mileage', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            action: 'complete',
+            entryId: incompleteEntry.id,
+            mileageEnd: parseFloat(mileageData.mileageEnd),
+            totalMiles: totalMiles
+          }),
+        });
+
+        if (response.ok) {
+          setSubmitStatus({ type: 'success', message: '✅ Shift completed! Mileage data submitted successfully!' });
+          setIncompleteEntry(null);
+          // Reset form
+          setMileageData({
+            date: new Date().toISOString().split('T')[0],
+            state: 'Nebraska',
+            mileageStart: '',
+            mileageEnd: ''
+          });
+        } else {
+          throw new Error('Failed to submit data');
+        }
+      } catch (error) {
+        console.error('Error completing mileage:', error);
+        setSubmitStatus({ type: 'error', message: 'Failed to submit data. Please try again.' });
+      }
+    } else {
+      // Starting a new entry
+      const payload = {
+        action: 'start',
+        driver: driverName,
+        truck: selectedTruck,
+        date: mileageData.date,
+        state: mileageData.state,
+        mileageStart: parseFloat(mileageData.mileageStart),
+        timestamp: new Date().toISOString()
+      };
+
+      try {
+        const response = await fetch('https://mileage-tracker-final.vercel.app/api/mileage', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (response.ok) {
+          setSubmitStatus({ type: 'success', message: '✅ Shift started! Come back later to enter your ending mileage.' });
+          // Reset form
+          setMileageData({
+            date: new Date().toISOString().split('T')[0],
+            state: 'Nebraska',
+            mileageStart: '',
+            mileageEnd: ''
+          });
+        } else {
+          throw new Error('Failed to submit data');
+        }
+      } catch (error) {
+        console.error('Error starting mileage:', error);
+        setSubmitStatus({ type: 'error', message: 'Failed to submit data. Please try again.' });
+      }
     }
   };
 
@@ -493,9 +573,24 @@ function App() {
             <button onClick={handleBack} className="btn btn-back">
               ← Back
             </button>
-            <h1>Track Mileage</h1>
+            <h1>{incompleteEntry ? 'Complete Shift' : 'Start Shift'}</h1>
             <p className="user-info">Driver: {displayName} | Truck: {selectedTruck}</p>
           </div>
+
+          {checkingIncomplete && (
+            <div className="info-message">
+              Checking for incomplete entries...
+            </div>
+          )}
+
+          {incompleteEntry && (
+            <div className="incomplete-entry-notice">
+              📍 <strong>Active Shift Found</strong>
+              <p>Started: {new Date(incompleteEntry.createdTime).toLocaleString()}</p>
+              <p>Starting Mileage: {incompleteEntry.mileageStart}</p>
+              <p>State: {incompleteEntry.state}</p>
+            </div>
+          )}
 
           <form onSubmit={submitMileageData} className="tracking-form">
             <div className="form-group">
@@ -506,6 +601,7 @@ function App() {
                 value={mileageData.date}
                 onChange={(e) => setMileageData({...mileageData, date: e.target.value})}
                 required
+                disabled={!!incompleteEntry}
                 className="text-input"
               />
             </div>
@@ -517,6 +613,7 @@ function App() {
                 value={mileageData.state}
                 onChange={(e) => setMileageData({...mileageData, state: e.target.value})}
                 required
+                disabled={!!incompleteEntry}
                 className="select-input"
               >
                 {STATES.map(state => (
@@ -525,33 +622,37 @@ function App() {
               </select>
             </div>
 
-            <div className="form-group">
-              <label htmlFor="mileage-start">Starting Mileage:</label>
-              <input
-                id="mileage-start"
-                type="number"
-                step="0.1"
-                value={mileageData.mileageStart}
-                onChange={(e) => setMileageData({...mileageData, mileageStart: e.target.value})}
-                placeholder="Enter starting odometer reading"
-                required
-                className="text-input"
-              />
-            </div>
+            {!incompleteEntry && (
+              <div className="form-group">
+                <label htmlFor="mileage-start">Starting Mileage:</label>
+                <input
+                  id="mileage-start"
+                  type="number"
+                  step="0.1"
+                  value={mileageData.mileageStart}
+                  onChange={(e) => setMileageData({...mileageData, mileageStart: e.target.value})}
+                  placeholder="Enter starting odometer reading"
+                  required
+                  className="text-input"
+                />
+              </div>
+            )}
 
-            <div className="form-group">
-              <label htmlFor="mileage-end">Ending Mileage:</label>
-              <input
-                id="mileage-end"
-                type="number"
-                step="0.1"
-                value={mileageData.mileageEnd}
-                onChange={(e) => setMileageData({...mileageData, mileageEnd: e.target.value})}
-                placeholder="Enter ending odometer reading"
-                required
-                className="text-input"
-              />
-            </div>
+            {incompleteEntry && (
+              <div className="form-group">
+                <label htmlFor="mileage-end">Ending Mileage:</label>
+                <input
+                  id="mileage-end"
+                  type="number"
+                  step="0.1"
+                  value={mileageData.mileageEnd}
+                  onChange={(e) => setMileageData({...mileageData, mileageEnd: e.target.value})}
+                  placeholder="Enter ending odometer reading"
+                  required
+                  className="text-input"
+                />
+              </div>
+            )}
 
             {totalMiles > 0 && (
               <div className="calculation-display">
@@ -560,7 +661,7 @@ function App() {
             )}
 
             <button type="submit" className="btn btn-primary btn-submit">
-              Submit Mileage
+              {incompleteEntry ? 'Complete Shift' : 'Start Shift'}
             </button>
 
             {submitStatus && (
@@ -773,8 +874,7 @@ function App() {
                     value={driverStatus[key].name}
                     onChange={(e) => handleCustomDriverName(key, e.target.value)}
                     placeholder="Other driver name..."
-                    className="custom-driver-input"
-                  />
+                    className="custom-driver-input/>
                   <div className="driver-checkboxes">
                     <label className="checkbox-container">
                       <input
