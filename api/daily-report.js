@@ -99,20 +99,25 @@ module.exports = async (req, res) => {
 
     const notionData = await notionRes.json();
 
-    if (!notionRes.ok) {
+  if (!notionRes.ok) {
       console.error('Notion error:', JSON.stringify(notionData));
       return res.status(500).json({ 
         success: false, 
-        error: notionData.message || 'Notion API error'
+        error: notionData.message || 'Notion API error',
+        details: notionData
       });
     }
 
     return res.status(200).json({ success: true, id: notionData.id });
 
-  } catch (error) {
+  }} catch (error) {
     console.error('Server error:', error);
-    return res.status(500).json({ success: false, error: error.message });
+    return res.status(500).json({ 
+      success: false, 
+      error: error.message,
+      stack: error.stack,
+      details: 'Check function name and database ID'
+    });
   }
-};
 
 ;
