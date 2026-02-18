@@ -793,6 +793,7 @@ function App() {
                     id="fuel-photo"
                     type="file"
                     accept="image/*"
+                    capture="environment"
                     onChange={handleFuelPhotoUpload}
                     className="file-input"
                   />
@@ -974,6 +975,7 @@ function App() {
                 id="issue-photo"
                 type="file"
                 accept="image/*"
+                capture="environment"
                 onChange={handlePhotoUpload}
                 className="file-input"
               />
