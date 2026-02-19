@@ -302,6 +302,48 @@ function App() {
     
     return null;
   };
+  
+  // Fetch week data when entering week-at-a-glance mode
+  useEffect(() => {
+    if (trackingMode === 'week-at-a-glance') {
+      const fetchWeekData = async () => {
+        setLoadingWeekData(true);
+        try {
+          const response = await fetch('https://mileage-tracker-final.vercel.app/api/get-week-summary');
+          const data = await response.json();
+          if (data.success) {
+            setWeekData(data);
+          }
+        } catch (error) {
+          console.error('Error fetching week data:', error);
+        } finally {
+          setLoadingWeekData(false);
+        }
+      };
+      fetchWeekData();
+    }
+  }, [trackingMode]);
+  
+  // Fetch fleet status when entering fleet-status mode
+  useEffect(() => {
+    if (trackingMode === 'fleet-status') {
+      const fetchFleetStatus = async () => {
+        setLoadingFleetStatus(true);
+        try {
+          const response = await fetch('https://mileage-tracker-final.vercel.app/api/get-fleet-status');
+          const data = await response.json();
+          if (data.success) {
+            setFleetStatus(data);
+          }
+        } catch (error) {
+          console.error('Error fetching fleet status:', error);
+        } finally {
+          setLoadingFleetStatus(false);
+        }
+      };
+      fetchFleetStatus();
+    }
+  }, [trackingMode]);
 
   // Handle login
   const handleLogin = () => {
@@ -872,25 +914,6 @@ function App() {
 
   // Week at a Glance View (Supervisor only)
   if (trackingMode === 'week-at-a-glance') {
-    // Fetch week data when component loads
-    useEffect(() => {
-      const fetchWeekData = async () => {
-        setLoadingWeekData(true);
-        try {
-          const response = await fetch('https://mileage-tracker-final.vercel.app/api/get-week-summary');
-          const data = await response.json();
-          if (data.success) {
-            setWeekData(data);
-          }
-        } catch (error) {
-          console.error('Error fetching week data:', error);
-        } finally {
-          setLoadingWeekData(false);
-        }
-      };
-      fetchWeekData();
-    }, []);
-
     return (
       <div className="App">
         <div className={`container ${animationClass}`}>
@@ -980,7 +1003,7 @@ function App() {
 
   // Fleet Status View (Supervisor only)
   if (trackingMode === 'fleet-status') {
-    const fetchFleetStatus = async () => {
+    const handleRefreshFleet = async () => {
       setLoadingFleetStatus(true);
       try {
         const response = await fetch('https://mileage-tracker-final.vercel.app/api/get-fleet-status');
@@ -994,10 +1017,6 @@ function App() {
         setLoadingFleetStatus(false);
       }
     };
-
-    useEffect(() => {
-      fetchFleetStatus();
-    }, []);
 
     return (
       <div className="App">
@@ -1071,7 +1090,7 @@ function App() {
 
                 <div style={{ textAlign: 'center' }}>
                   <button 
-                    onClick={fetchFleetStatus} 
+                    onClick={handleRefreshFleet} 
                     className="refresh-button"
                     disabled={loadingFleetStatus}
                   >
