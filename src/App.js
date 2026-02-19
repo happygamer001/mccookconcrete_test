@@ -870,6 +870,232 @@ function App() {
     );
   }
 
+  // Week at a Glance View (Supervisor only)
+  if (trackingMode === 'week-at-a-glance') {
+    // Fetch week data when component loads
+    useEffect(() => {
+      const fetchWeekData = async () => {
+        setLoadingWeekData(true);
+        try {
+          const response = await fetch('https://mileage-tracker-final.vercel.app/api/get-week-summary');
+          const data = await response.json();
+          if (data.success) {
+            setWeekData(data);
+          }
+        } catch (error) {
+          console.error('Error fetching week data:', error);
+        } finally {
+          setLoadingWeekData(false);
+        }
+      };
+      fetchWeekData();
+    }, []);
+
+    return (
+      <div className="App">
+        <div className={`container ${animationClass}`}>
+          <div className="header">
+            <button onClick={() => {
+              setAnimationClass('slide-in-left');
+              setTrackingMode('supervisor-menu');
+            }} className="btn btn-back">
+              ← Back
+            </button>
+            <button onClick={handleLogout} className="btn btn-secondary">
+              Logout
+            </button>
+          </div>
+
+          <div className="week-container">
+            <div className="week-header">
+              <h2>📊 Week at a Glance</h2>
+              {weekData && (
+                <p className="week-date-range">
+                  {new Date(weekData.startDate).toLocaleDateString()} - {new Date(weekData.endDate).toLocaleDateString()}
+                </p>
+              )}
+            </div>
+
+            {loadingWeekData && (
+              <div className="info-message">
+                <span className="loading-spinner"></span>
+                Loading week data...
+              </div>
+            )}
+
+            {!loadingWeekData && weekData && weekData.data && weekData.data.length === 0 && (
+              <div className="info-message">
+                No activity this week yet.
+              </div>
+            )}
+
+            {!loadingWeekData && weekData && weekData.data && weekData.data.map((driverData, index) => (
+              <div key={index} className="driver-card">
+                <div className="driver-header">
+                  <div className="driver-name">{driverData.driver}</div>
+                  <div className="driver-truck">🚛 {driverData.truck}</div>
+                </div>
+
+                <div className="week-stats">
+                  <div className="stat-box">
+                    <div className="stat-label">Total Miles</div>
+                    <div className="stat-value highlight">{driverData.totalMiles.toFixed(1)}</div>
+                  </div>
+                  <div className="stat-box">
+                    <div className="stat-label">Fuel Spent</div>
+                    <div className="stat-value">${driverData.totalFuelCost.toFixed(2)}</div>
+                  </div>
+                  <div className="stat-box">
+                    <div className="stat-label">Nebraska</div>
+                    <div className="stat-value">{driverData.nebraskaMiles.toFixed(1)} mi</div>
+                  </div>
+                  <div className="stat-box">
+                    <div className="stat-label">Kansas</div>
+                    <div className="stat-value">{driverData.kansasMiles.toFixed(1)} mi</div>
+                  </div>
+                </div>
+
+                <div className="daily-breakdown">
+                  {Object.entries(driverData.days).map(([date, dayData]) => (
+                    <div key={date} className="daily-row">
+                      <div className="day-label">
+                        {new Date(date).toLocaleDateString('en-US', { weekday: 'short', month: 'numeric', day: 'numeric' })}
+                      </div>
+                      <div className="daily-value">
+                        {dayData.miles > 0 ? `${dayData.miles.toFixed(1)} mi` : '---'}
+                      </div>
+                      <div className="daily-value">
+                        {dayData.fuelCost > 0 ? `$${dayData.fuelCost.toFixed(2)}` : '---'}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Fleet Status View (Supervisor only)
+  if (trackingMode === 'fleet-status') {
+    const fetchFleetStatus = async () => {
+      setLoadingFleetStatus(true);
+      try {
+        const response = await fetch('https://mileage-tracker-final.vercel.app/api/get-fleet-status');
+        const data = await response.json();
+        if (data.success) {
+          setFleetStatus(data);
+        }
+      } catch (error) {
+        console.error('Error fetching fleet status:', error);
+      } finally {
+        setLoadingFleetStatus(false);
+      }
+    };
+
+    useEffect(() => {
+      fetchFleetStatus();
+    }, []);
+
+    return (
+      <div className="App">
+        <div className={`container ${animationClass}`}>
+          <div className="header">
+            <button onClick={() => {
+              setAnimationClass('slide-in-left');
+              setTrackingMode('supervisor-menu');
+            }} className="btn btn-back">
+              ← Back
+            </button>
+            <button onClick={handleLogout} className="btn btn-secondary">
+              Logout
+            </button>
+          </div>
+
+          <div className="week-container">
+            <div className="week-header">
+              <h2>🚛 Fleet Status</h2>
+              {fleetStatus && (
+                <p className="week-date-range">
+                  {fleetStatus.date} at {fleetStatus.time}
+                </p>
+              )}
+            </div>
+
+            {loadingFleetStatus && (
+              <div className="info-message">
+                <span className="loading-spinner"></span>
+                Loading fleet status...
+              </div>
+            )}
+
+            {!loadingFleetStatus && fleetStatus && (
+              <>
+                <div className="fleet-grid">
+                  {fleetStatus.fleetStatus && fleetStatus.fleetStatus.map((truck, index) => (
+                    <div key={index} className={`fleet-card ${truck.status === 'In Use' ? 'in-use' : 'available'}`}>
+                      <span className={`truck-status-badge ${truck.status === 'In Use' ? 'in-use' : 'available'}`}>
+                        {truck.status}
+                      </span>
+                      <div className="fleet-truck-name">🚛 {truck.truck}</div>
+
+                      {truck.status === 'In Use' ? (
+                        <>
+                          <div className="fleet-detail">
+                            <span className="fleet-label">Driver:</span>
+                            <span className="fleet-value">{truck.driver}</span>
+                          </div>
+                          <div className="fleet-detail">
+                            <span className="fleet-label">Started:</span>
+                            <span className="fleet-value">{truck.startTime}</span>
+                          </div>
+                          <div className="fleet-detail">
+                            <span className="fleet-label">Start Mileage:</span>
+                            <span className="fleet-value">{truck.startMileage.toFixed(1)}</span>
+                          </div>
+                          <div className="fleet-detail">
+                            <span className="fleet-label">State:</span>
+                            <span className="fleet-value">{truck.state}</span>
+                          </div>
+                        </>
+                      ) : (
+                        <p style={{ color: '#48bb78', textAlign: 'center', marginTop: '20px', fontWeight: '600' }}>
+                          Ready for use
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ textAlign: 'center' }}>
+                  <button 
+                    onClick={fetchFleetStatus} 
+                    className="refresh-button"
+                    disabled={loadingFleetStatus}
+                  >
+                    {loadingFleetStatus ? (
+                      <>
+                        <span className="loading-spinner"></span>
+                        Refreshing...
+                      </>
+                    ) : (
+                      '🔄 Refresh Status'
+                    )}
+                  </button>
+                  <p className="fleet-timestamp">
+                    Updates every time you refresh. Auto-refresh coming soon.
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Render truck selection screen (skip for batch managers)
   if (!selectedTruck && !isBatchManager) {
     const displayName = currentDriver === 'Other' ? customDriverName : currentDriver;
