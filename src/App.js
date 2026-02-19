@@ -110,13 +110,8 @@ function App() {
     return saved === 'true';
   });
   
-  // Loading and offline state
-  const [isLoading, setIsLoading] = useState(false);
+  // Online/offline state
   const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [offlineQueue, setOfflineQueue] = useState([]);
-  
-  // Mileage alert state
-  const [mileageAlert, setMileageAlert] = useState(null);
   
   // Week at a glance data
   const [weekData, setWeekData] = useState(null);
@@ -267,41 +262,6 @@ function App() {
       window.removeEventListener('offline', handleOffline);
     };
   }, []);
-  
-  // Smart mileage validation
-  const validateMileage = (start, end, type = 'trip') => {
-    const startNum = parseFloat(start);
-    const endNum = parseFloat(end);
-    const diff = endNum - startNum;
-    
-    if (isNaN(startNum) || isNaN(endNum)) return null;
-    
-    // Negative mileage
-    if (diff < 0) {
-      return {
-        type: 'error',
-        message: '⚠️ Ending mileage is less than starting mileage. Please check your numbers.'
-      };
-    }
-    
-    // Single trip > 300 miles (unusual for local concrete delivery)
-    if (type === 'trip' && diff > 300) {
-      return {
-        type: 'warning',
-        message: `⚠️ This trip shows ${diff.toFixed(1)} miles. That's unusually high for a single shift. Double-check your numbers?`
-      };
-    }
-    
-    // Mileage jump > 1000 (possible truck swap or typo)
-    if (diff > 1000) {
-      return {
-        type: 'warning',
-        message: `⚠️ Odometer jumped ${diff.toFixed(1)} miles. Did you switch trucks or is this a typo?`
-      };
-    }
-    
-    return null;
-  };
   
   // Fetch week data when entering week-at-a-glance mode
   useEffect(() => {
