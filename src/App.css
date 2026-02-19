@@ -624,6 +624,55 @@ body {
   font-size: 20px;
 }
 
+/* State Breakdown Styles */
+.state-breakdown-header {
+  color: #2d3748;
+  font-weight: 700;
+  font-size: 18px;
+  margin-top: 20px;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.state-section {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 15px;
+}
+
+.state-header {
+  color: #2d3748;
+  font-weight: 700;
+  font-size: 16px;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.summary-row.state-detail {
+  padding: 8px 0;
+  border-bottom: 1px dotted #cbd5e0;
+}
+
+.summary-row.state-detail:last-child {
+  border-bottom: none;
+}
+
+.summary-row.state-miles {
+  font-weight: 700;
+  margin-top: 5px;
+  padding-top: 8px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.summary-row.state-miles .summary-value {
+  color: #FF7E26;
+  font-size: 18px;
+}
+
 .btn-large {
   padding: 18px 40px;
   font-size: 18px;
