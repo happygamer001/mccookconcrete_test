@@ -47,21 +47,21 @@ module.exports = async (req, res) => {
 
     // Add cost and location only if provided (for Semi)
     if (cost !== null && cost !== undefined) {
-      properties['Cost'] = { number: cost };
+      properties['Total Cost'] = { number: cost };
     }
 
-    if (location !== null && location !== undefined) {
+    if (location !== null && location !== undefined && location.trim() !== '') {
       properties['Location'] = {
         rich_text: [{ text: { content: location } }]
       };
     }
 
-    // Add photo if provided (for Semi) - store as base64 in rich_text
-    if (fuelPhoto) {
-      properties['Receipt Photo'] = {
-        rich_text: [{ text: { content: fuelPhoto.substring(0, 2000) } }]
-      };
-    }
+    // Skip photo for now - we'll handle this separately once the column is set up
+    // if (fuelPhoto) {
+    //   properties['Receipt Photo'] = {
+    //     rich_text: [{ text: { content: fuelPhoto.substring(0, 2000) } }]
+    //   };
+    // }
 
     const notionRes = await fetch('https://api.notion.com/v1/pages', {
       method: 'POST',
@@ -80,13 +80,18 @@ module.exports = async (req, res) => {
 
     if (!notionRes.ok) {
       console.error('Notion error:', JSON.stringify(notionData));
-      return res.status(500).json({ success: false, error: notionData.message || 'Notion API error' });
+      return res.status(500).json({ 
+        success: false, 
+        error: notionData.message || 'Notion API error',
+        details: notionData,
+        sentProperties: Object.keys(properties)
+      });
     }
 
     return res.status(200).json({ success: true, id: notionData.id });
 
   } catch (error) {
     console.error('Server error:', error);
-    return res.status(500).json({ success: false, error: error.message });
+    return res.status(500).json({ success: false, error: error.message, stack: error.stack });
   }
 };
