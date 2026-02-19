@@ -403,15 +403,39 @@ function App() {
         });
 
         if (response.ok) {
-          // Store completion data
-          setCompletionData({
-            driver: driverName,
-            truck: selectedTruck,
-            state: mileageData.state,
-            mileageStart: mileageData.mileageStart,
-            mileageEnd: mileageData.mileageEnd,
-            totalMiles: totalMiles
-          });
+          // Fetch all completed trips for this driver/truck/date to show full journey
+          try {
+            const tripsResponse = await fetch(
+              `https://mileage-tracker-final.vercel.app/api/get-daily-trips?driver=${encodeURIComponent(driverName)}&truck=${encodeURIComponent(selectedTruck)}&date=${mileageData.date}`
+            );
+            
+            const tripsData = await tripsResponse.json();
+            
+            // Store completion data with all trips
+            setCompletionData({
+              driver: driverName,
+              truck: selectedTruck,
+              date: mileageData.date,
+              trips: tripsData.trips || [],
+              totalMiles: tripsData.totalMiles || totalMiles
+            });
+          } catch (fetchError) {
+            console.error('Error fetching trips:', fetchError);
+            // Fallback to single trip data
+            setCompletionData({
+              driver: driverName,
+              truck: selectedTruck,
+              date: mileageData.date,
+              trips: [{
+                state: mileageData.state,
+                mileageStart: parseFloat(mileageData.mileageStart),
+                mileageEnd: parseFloat(mileageData.mileageEnd),
+                totalMiles: totalMiles,
+                timestamp: new Date().toISOString()
+              }],
+              totalMiles: totalMiles
+            });
+          }
           
           // Show completion screen
           setShowCompletionScreen(true);
@@ -786,6 +810,28 @@ function App() {
 
     // Show completion screen after successful submission
     if (showCompletionScreen && completionData) {
+      // Group trips by state
+      const tripsByState = {};
+      let overallStart = null;
+      let overallEnd = null;
+      
+      if (completionData.trips && completionData.trips.length > 0) {
+        completionData.trips.forEach(trip => {
+          if (!tripsByState[trip.state]) {
+            tripsByState[trip.state] = [];
+          }
+          tripsByState[trip.state].push(trip);
+          
+          // Track overall start and end
+          if (overallStart === null || trip.mileageStart < overallStart) {
+            overallStart = trip.mileageStart;
+          }
+          if (overallEnd === null || trip.mileageEnd > overallEnd) {
+            overallEnd = trip.mileageEnd;
+          }
+        });
+      }
+      
       return (
         <div className="App">
           <div className={`container ${animationClass}`}>
@@ -805,17 +851,41 @@ function App() {
                   <span className="summary-value">{completionData.truck}</span>
                 </div>
                 <div className="summary-row">
-                  <span className="summary-label">State:</span>
-                  <span className="summary-value">{completionData.state}</span>
+                  <span className="summary-label">Date:</span>
+                  <span className="summary-value">{new Date(completionData.date).toLocaleDateString()}</span>
                 </div>
-                <div className="summary-row">
-                  <span className="summary-label">Starting Mileage:</span>
-                  <span className="summary-value">{completionData.mileageStart}</span>
-                </div>
-                <div className="summary-row">
-                  <span className="summary-label">Ending Mileage:</span>
-                  <span className="summary-value">{completionData.mileageEnd}</span>
-                </div>
+                
+                {/* Show breakdown by state */}
+                {Object.keys(tripsByState).length > 0 && (
+                  <>
+                    <div className="state-breakdown-header">State Breakdown:</div>
+                    {Object.keys(tripsByState).map(state => {
+                      const stateTrips = tripsByState[state];
+                      const stateMiles = stateTrips.reduce((sum, trip) => sum + trip.totalMiles, 0);
+                      const stateStart = Math.min(...stateTrips.map(t => t.mileageStart));
+                      const stateEnd = Math.max(...stateTrips.map(t => t.mileageEnd));
+                      
+                      return (
+                        <div key={state} className="state-section">
+                          <div className="state-header">📍 {state}</div>
+                          <div className="summary-row state-detail">
+                            <span className="summary-label">Start:</span>
+                            <span className="summary-value">{stateStart.toFixed(1)}</span>
+                          </div>
+                          <div className="summary-row state-detail">
+                            <span className="summary-label">End:</span>
+                            <span className="summary-value">{stateEnd.toFixed(1)}</span>
+                          </div>
+                          <div className="summary-row state-detail state-miles">
+                            <span className="summary-label">Miles:</span>
+                            <span className="summary-value">{stateMiles.toFixed(1)} mi</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </>
+                )}
+                
                 <div className="summary-row total">
                   <span className="summary-label">Total Miles:</span>
                   <span className="summary-value">{completionData.totalMiles.toFixed(1)} miles</span>
