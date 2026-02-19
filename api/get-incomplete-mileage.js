@@ -17,18 +17,24 @@ module.exports = async (req, res) => {
     const { driver, truck } = req.query;
 
     if (!driver || !truck) {
-      return res.status(400).json({ error: 'Driver and truck are required' });
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Missing required query parameters: driver and truck' 
+      });
     }
 
     const notionApiKey = process.env.NOTION_API_KEY;
     const databaseId = process.env.NOTION_MILEAGE_DB_ID;
 
     if (!notionApiKey || !databaseId) {
-      return res.status(500).json({ error: 'Missing environment variables' });
+      return res.status(500).json({ 
+        success: false, 
+        error: 'Missing environment variables' 
+      });
     }
 
-    // Query Notion for incomplete entries
-    const notionRes = await fetch(`https://api.notion.com/v1/databases/${databaseId}/query`, {
+    // Query Notion database for incomplete entries matching BOTH driver AND truck
+    const notionRes = await fetch('https://api.notion.com/v1/databases/' + databaseId + '/query', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${notionApiKey}`,
@@ -60,7 +66,7 @@ module.exports = async (req, res) => {
         },
         sorts: [
           {
-            property: 'Date',
+            property: 'Timestamp',
             direction: 'descending'
           }
         ],
@@ -68,33 +74,50 @@ module.exports = async (req, res) => {
       })
     });
 
-    const data = await notionRes.json();
+    const notionData = await notionRes.json();
 
     if (!notionRes.ok) {
-      console.error('Notion error:', JSON.stringify(data));
-      return res.status(500).json({ error: 'Notion API error', details: data });
+      console.error('Notion error:', JSON.stringify(notionData));
+      return res.status(500).json({ 
+        success: false, 
+        error: notionData.message || 'Notion API error',
+        details: notionData
+      });
     }
 
-    // Return the most recent incomplete entry, if any
-    if (data.results && data.results.length > 0) {
-      const entry = data.results[0];
+    // If we found an incomplete entry
+    if (notionData.results && notionData.results.length > 0) {
+      const page = notionData.results[0];
       
+      // Extract the data from Notion's format
+      const entry = {
+        id: page.id,
+        driver: page.properties['Driver Name']?.select?.name || driver,
+        truck: page.properties['Truck Number']?.select?.name || truck,
+        date: page.properties['Date']?.date?.start || '',
+        state: page.properties['State']?.select?.name || '',
+        mileageStart: page.properties['Mileage Start']?.number || 0,
+        createdTime: page.created_time
+      };
+
       return res.status(200).json({
         found: true,
-        entry: {
-          id: entry.id,
-          date: entry.properties.Date?.date?.start || '',
-          state: entry.properties.State?.select?.name || '',
-          mileageStart: entry.properties['Mileage Start']?.number || 0,
-          createdTime: entry.created_time
-        }
+        entry: entry
       });
     } else {
-      return res.status(200).json({ found: false });
+      // No incomplete entry found
+      return res.status(200).json({
+        found: false,
+        entry: null
+      });
     }
 
   } catch (error) {
     console.error('Server error:', error);
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json({ 
+      success: false, 
+      error: error.message,
+      stack: error.stack
+    });
   }
 };
