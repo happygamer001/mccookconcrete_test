@@ -64,6 +64,11 @@ function App() {
   const [crossStateMileage, setCrossStateMileage] = useState('');
   const [newState, setNewState] = useState('Kansas');
   
+  // GPS detection state
+  const [gpsPermission, setGpsPermission] = useState(null); // null, 'granted', 'denied'
+  const [detectedStateCrossing, setDetectedStateCrossing] = useState(false);
+  const [checkingLocation, setCheckingLocation] = useState(false);
+  
   // Fuel form state
   const [fuelData, setFuelData] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -129,12 +134,96 @@ function App() {
     }
   }, [currentDriver, customDriverName, selectedTruck]);
 
+  // Determine state from GPS coordinates
+  const getStateFromCoordinates = (latitude, longitude) => {
+    // Nebraska/Kansas border is approximately at 40°N latitude
+    // Nebraska is north of the border, Kansas is south
+    
+    // Rough boundaries:
+    // Nebraska: 40°N to 43°N, -104°W to -95.3°W
+    // Kansas: 37°N to 40°N, -102°W to -94.6°W
+    
+    if (latitude >= 40.0) {
+      return 'Nebraska';
+    } else if (latitude < 40.0 && latitude >= 37.0) {
+      return 'Kansas';
+    }
+    
+    // Default to Nebraska if coordinates are unclear
+    return 'Nebraska';
+  };
+
+  // Check GPS location and detect state crossing
+  const checkGPSLocation = useCallback(() => {
+    if (!incompleteEntry) return;
+    
+    // Don't check if modal is already open
+    if (showCrossStateModal) return;
+    
+    // Check if GPS is available
+    if (!navigator.geolocation) {
+      console.log('Geolocation not supported');
+      return;
+    }
+    
+    setCheckingLocation(true);
+    
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        const detectedState = getStateFromCoordinates(latitude, longitude);
+        
+        console.log(`GPS Location: ${latitude}, ${longitude}`);
+        console.log(`Detected State: ${detectedState}`);
+        console.log(`Shift State: ${incompleteEntry.state}`);
+        
+        // If detected state is different from shift state, prompt user
+        if (detectedState !== incompleteEntry.state) {
+          setDetectedStateCrossing(true);
+          setNewState(detectedState);
+          // Auto-open the cross state modal with detected state
+          setTimeout(() => {
+            setShowCrossStateModal(true);
+          }, 1000); // Small delay to let the page load
+        }
+        
+        setCheckingLocation(false);
+        setGpsPermission('granted');
+      },
+      (error) => {
+        console.log('GPS Error:', error.message);
+        setCheckingLocation(false);
+        
+        if (error.code === 1) {
+          setGpsPermission('denied');
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 60000 // Cache location for 1 minute
+      }
+    );
+  }, [incompleteEntry, showCrossStateModal]);
+
   // Check for incomplete entries when entering mileage mode
   useEffect(() => {
     if (trackingMode === 'mileage' && selectedTruck) {
       checkForIncompleteEntry();
     }
   }, [trackingMode, selectedTruck, checkForIncompleteEntry]);
+
+  // Check GPS location when incomplete entry is found
+  useEffect(() => {
+    if (incompleteEntry && trackingMode === 'mileage') {
+      // Wait a bit for the page to render, then check GPS
+      const timer = setTimeout(() => {
+        checkGPSLocation();
+      }, 1500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [incompleteEntry, trackingMode, checkGPSLocation]);
 
   // Handle login
   const handleLogin = () => {
@@ -254,6 +343,7 @@ function App() {
       // Success! Close modal and refresh incomplete entry
       setShowCrossStateModal(false);
       setCrossStateMileage('');
+      setDetectedStateCrossing(false);
       setSubmitStatus({ 
         type: 'success', 
         message: `✅ Crossed into ${newState}! Continue driving and complete shift when done.` 
@@ -694,6 +784,29 @@ function App() {
             </div>
           )}
 
+          {checkingLocation && (
+            <div className="info-message">
+              🌍 Checking your location...
+            </div>
+          )}
+
+          {detectedStateCrossing && !showCrossStateModal && (
+            <div className="gps-detection-notice">
+              📍 <strong>State Crossing Detected!</strong>
+              <p>GPS shows you're now in <strong>{newState}</strong></p>
+              <p>Your shift started in <strong>{incompleteEntry.state}</strong></p>
+              <p>Click "Cross State Line" below to split your shift.</p>
+            </div>
+          )}
+
+          {gpsPermission === 'denied' && incompleteEntry && (
+            <div className="gps-permission-notice">
+              ℹ️ <strong>Location Permission Needed</strong>
+              <p>Enable location access to auto-detect state crossings.</p>
+              <p>You can still use the "Cross State Line" button manually.</p>
+            </div>
+          )}
+
           {incompleteEntry && !showCrossStateModal && (
             <button 
               type="button"
@@ -711,8 +824,13 @@ function App() {
 
           {showCrossStateModal && (
             <div className="cross-state-modal">
-              <h3>Crossing State Line</h3>
+              <h3>{detectedStateCrossing ? '📍 GPS Detected State Crossing' : 'Crossing State Line'}</h3>
               <p>You're leaving <strong>{incompleteEntry.state}</strong></p>
+              {detectedStateCrossing && (
+                <p style={{ color: '#2196f3', fontWeight: 600 }}>
+                  GPS detected you're now in {newState}
+                </p>
+              )}
               
               <form onSubmit={handleCrossStateLine} className="tracking-form">
                 <div className="form-group">
@@ -758,6 +876,7 @@ function App() {
                     onClick={() => {
                       setShowCrossStateModal(false);
                       setCrossStateMileage('');
+                      setDetectedStateCrossing(false);
                     }}
                     className="btn btn-secondary" 
                     style={{ flex: 1 }}
