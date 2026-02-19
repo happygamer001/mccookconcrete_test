@@ -103,6 +103,28 @@ function App() {
   // Completion screen state
   const [showCompletionScreen, setShowCompletionScreen] = useState(false);
   const [completionData, setCompletionData] = useState(null);
+  
+  // Dark mode state
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = localStorage.getItem('darkMode');
+    return saved === 'true';
+  });
+  
+  // Loading and offline state
+  const [isLoading, setIsLoading] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [offlineQueue, setOfflineQueue] = useState([]);
+  
+  // Mileage alert state
+  const [mileageAlert, setMileageAlert] = useState(null);
+  
+  // Week at a glance data
+  const [weekData, setWeekData] = useState(null);
+  const [loadingWeekData, setLoadingWeekData] = useState(false);
+  
+  // Fleet status data
+  const [fleetStatus, setFleetStatus] = useState(null);
+  const [loadingFleetStatus, setLoadingFleetStatus] = useState(false);
 
   // Check for incomplete mileage entry - wrapped in useCallback
   const checkForIncompleteEntry = useCallback(async () => {
@@ -225,6 +247,61 @@ function App() {
       return () => clearTimeout(timer);
     }
   }, [incompleteEntry, trackingMode, checkGPSLocation]);
+  
+  // Dark mode effect
+  useEffect(() => {
+    document.body.classList.toggle('dark-mode', darkMode);
+    localStorage.setItem('darkMode', darkMode);
+  }, [darkMode]);
+  
+  // Online/offline detection
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+  
+  // Smart mileage validation
+  const validateMileage = (start, end, type = 'trip') => {
+    const startNum = parseFloat(start);
+    const endNum = parseFloat(end);
+    const diff = endNum - startNum;
+    
+    if (isNaN(startNum) || isNaN(endNum)) return null;
+    
+    // Negative mileage
+    if (diff < 0) {
+      return {
+        type: 'error',
+        message: '⚠️ Ending mileage is less than starting mileage. Please check your numbers.'
+      };
+    }
+    
+    // Single trip > 300 miles (unusual for local concrete delivery)
+    if (type === 'trip' && diff > 300) {
+      return {
+        type: 'warning',
+        message: `⚠️ This trip shows ${diff.toFixed(1)} miles. That's unusually high for a single shift. Double-check your numbers?`
+      };
+    }
+    
+    // Mileage jump > 1000 (possible truck swap or typo)
+    if (diff > 1000) {
+      return {
+        type: 'warning',
+        message: `⚠️ Odometer jumped ${diff.toFixed(1)} miles. Did you switch trucks or is this a typo?`
+      };
+    }
+    
+    return null;
+  };
 
   // Handle login
   const handleLogin = () => {
@@ -234,9 +311,9 @@ function App() {
       setIsLoggedIn(true);
       setIsBatchManager(isBatchMgr);
       
-      // Batch managers/supervisors go directly to Daily Report
+      // Batch managers/supervisors go to supervisor menu (not directly to daily report)
       if (isBatchMgr) {
-        setTrackingMode('daily-report');
+        setTrackingMode('supervisor-menu');
       }
     } else {
       alert('Please select a driver name');
@@ -716,6 +793,78 @@ function App() {
               </button>
             </div>
           </div>
+        </div>
+      </div>
+    );
+  }
+  
+  // Render Supervisor Menu (for batch managers/supervisors only)
+  if (trackingMode === 'supervisor-menu') {
+    return (
+      <div className="App">
+        <div className={`container ${animationClass}`}>
+          <div className="header">
+            <h1>📊 Supervisor Dashboard</h1>
+            <p className="user-info">Welcome, {currentDriver}</p>
+            <button onClick={handleLogout} className="btn btn-secondary">
+              Logout
+            </button>
+          </div>
+          
+          <div className="supervisor-menu">
+            <button
+              onClick={() => {
+                setAnimationClass('slide-in-right');
+                setTrackingMode('daily-report');
+              }}
+              className="supervisor-option-card"
+            >
+              <div className="option-icon">📋</div>
+              <div className="option-title">Daily Job Report</div>
+              <div className="option-description">Submit today's batch and driver info</div>
+            </button>
+            
+            <button
+              onClick={() => {
+                setAnimationClass('slide-in-right');
+                setTrackingMode('week-at-a-glance');
+              }}
+              className="supervisor-option-card"
+            >
+              <div className="option-icon">📊</div>
+              <div className="option-title">Week at a Glance</div>
+              <div className="option-description">View all drivers' weekly activity</div>
+            </button>
+            
+            <button
+              onClick={() => {
+                setAnimationClass('slide-in-right');
+                setTrackingMode('fleet-status');
+              }}
+              className="supervisor-option-card"
+            >
+              <div className="option-icon">🚛</div>
+              <div className="option-title">Fleet Status</div>
+              <div className="option-description">See who has which truck right now</div>
+            </button>
+          </div>
+          
+          <div className="dark-mode-toggle">
+            <label>
+              <input 
+                type="checkbox" 
+                checked={darkMode} 
+                onChange={(e) => setDarkMode(e.target.checked)}
+              />
+              🌙 Dark Mode
+            </label>
+          </div>
+          
+          {!isOnline && (
+            <div className="offline-banner">
+              📵 Offline - You can still use the app. Changes will sync when back online.
+            </div>
+          )}
         </div>
       </div>
     );
