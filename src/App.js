@@ -59,6 +59,11 @@ function App() {
   const [incompleteEntry, setIncompleteEntry] = useState(null);
   const [checkingIncomplete, setCheckingIncomplete] = useState(false);
   
+  // Cross state line state
+  const [showCrossStateModal, setShowCrossStateModal] = useState(false);
+  const [crossStateMileage, setCrossStateMileage] = useState('');
+  const [newState, setNewState] = useState('Kansas');
+  
   // Fuel form state
   const [fuelData, setFuelData] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -188,6 +193,80 @@ function App() {
       });
     } else if (selectedTruck) {
       setSelectedTruck('');
+    }
+  };
+
+  // Handle crossing state line
+  const handleCrossStateLine = async (e) => {
+    e.preventDefault();
+    
+    if (!crossStateMileage || parseFloat(crossStateMileage) <= 0) {
+      setSubmitStatus({ type: 'error', message: 'Please enter a valid mileage reading' });
+      return;
+    }
+    
+    if (parseFloat(crossStateMileage) <= parseFloat(incompleteEntry.mileageStart)) {
+      setSubmitStatus({ type: 'error', message: 'Current mileage must be greater than starting mileage' });
+      return;
+    }
+    
+    const driverName = currentDriver === 'Other' ? customDriverName : currentDriver;
+    
+    try {
+      // Step 1: Complete the current shift in the current state
+      const completeResponse = await fetch('https://mileage-tracker-final.vercel.app/api/mileage', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'complete',
+          entryId: incompleteEntry.id,
+          mileageEnd: parseFloat(crossStateMileage)
+        }),
+      });
+      
+      if (!completeResponse.ok) {
+        throw new Error('Failed to complete current shift');
+      }
+      
+      // Step 2: Start a new shift in the new state
+      const startResponse = await fetch('https://mileage-tracker-final.vercel.app/api/mileage', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'start',
+          driver: driverName,
+          truck: selectedTruck,
+          date: mileageData.date,
+          state: newState,
+          mileageStart: parseFloat(crossStateMileage),
+          timestamp: new Date().toISOString()
+        }),
+      });
+      
+      if (!startResponse.ok) {
+        throw new Error('Failed to start new shift in new state');
+      }
+      
+      // Success! Close modal and refresh incomplete entry
+      setShowCrossStateModal(false);
+      setCrossStateMileage('');
+      setSubmitStatus({ 
+        type: 'success', 
+        message: `✅ Crossed into ${newState}! Continue driving and complete shift when done.` 
+      });
+      
+      // Refresh to get the new incomplete entry
+      setTimeout(() => {
+        checkForIncompleteEntry();
+      }, 1000);
+      
+    } catch (error) {
+      console.error('Error crossing state line:', error);
+      setSubmitStatus({ type: 'error', message: 'Failed to process state line crossing. Please try again.' });
     }
   };
 
@@ -615,7 +694,83 @@ function App() {
             </div>
           )}
 
-          <form onSubmit={submitMileageData} className="tracking-form">
+          {incompleteEntry && !showCrossStateModal && (
+            <button 
+              type="button"
+              onClick={() => {
+                setShowCrossStateModal(true);
+                // Set the opposite state as default
+                setNewState(incompleteEntry.state === 'Nebraska' ? 'Kansas' : 'Nebraska');
+              }}
+              className="btn btn-secondary"
+              style={{ marginBottom: '20px', width: '100%' }}
+            >
+              🚗 Cross State Line
+            </button>
+          )}
+
+          {showCrossStateModal && (
+            <div className="cross-state-modal">
+              <h3>Crossing State Line</h3>
+              <p>You're leaving <strong>{incompleteEntry.state}</strong></p>
+              
+              <form onSubmit={handleCrossStateLine} className="tracking-form">
+                <div className="form-group">
+                  <label htmlFor="cross-mileage">Current Odometer Reading:</label>
+                  <input
+                    id="cross-mileage"
+                    type="number"
+                    inputMode="decimal"
+                    step="0.1"
+                    value={crossStateMileage}
+                    onChange={(e) => setCrossStateMileage(e.target.value)}
+                    placeholder="Enter current mileage"
+                    required
+                    autoFocus
+                    className="text-input"
+                  />
+                  <small style={{ color: '#718096', marginTop: '5px', display: 'block' }}>
+                    Must be greater than {incompleteEntry.mileageStart}
+                  </small>
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="new-state">Entering State:</label>
+                  <select
+                    id="new-state"
+                    value={newState}
+                    onChange={(e) => setNewState(e.target.value)}
+                    required
+                    className="select-input"
+                  >
+                    {STATES.map(state => (
+                      <option key={state} value={state}>{state}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+                  <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>
+                    Confirm State Crossing
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      setShowCrossStateModal(false);
+                      setCrossStateMileage('');
+                    }}
+                    className="btn btn-secondary" 
+                    style={{ flex: 1 }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {!showCrossStateModal && (
+            <form onSubmit={submitMileageData} className="tracking-form">
             <div className="form-group">
               <label htmlFor="mileage-date">Date:</label>
               <input
@@ -695,6 +850,7 @@ function App() {
               </div>
             )}
           </form>
+          )}
         </div>
       </div>
     );
