@@ -1,899 +1,1378 @@
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background: linear-gradient(135deg, #FF7E26 0%, #FF9C59 50%, #FFF4D6 100%);
-  min-height: 100vh;
-}
-
-.App {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-
-.container {
-  width: 100%;
-  max-width: 800px;
-  background: white;
-  border-radius: 20px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  padding: 40px;
-  animation: fadeIn 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  box-sizing: border-box;
-  overflow-x: hidden;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(60px) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@keyframes slideInRight {
-  from {
-    opacity: 0;
-    transform: translateX(120px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes slideInLeft {
-  from {
-    opacity: 0;
-    transform: translateX(-120px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-.slide-in-right {
-  animation: slideInRight 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-.slide-in-left {
-  animation: slideInLeft 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-/* Header Styles */
-.header {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  margin-bottom: 30px;
-  position: relative;
-}
-
-.header h1 {
-  color: #2d3748;
-  font-size: 32px;
-  font-weight: 700;
-}
-
-.user-info {
-  color: #718096;
-  font-size: 16px;
-  font-weight: 500;
-}
-
-/* Login Screen */
-.login-screen {
-  text-align: center;
-}
-
-.company-logo {
-  max-width: 300px;
-  width: 100%;
-  height: auto;
-  margin: 0 auto 30px;
-  display: block;
-}
-
-.login-screen h1 {
-  color: #2d3748;
-  font-size: 36px;
-  margin-bottom: 10px;
-  font-weight: 700;
-}
-
-.login-screen h2 {
-  color: #FF7E26;
-  font-size: 24px;
-  margin-bottom: 40px;
-  font-weight: 600;
-}
-
-.login-form {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  max-width: 400px;
-  margin: 0 auto;
-}
-
-.login-form label {
-  text-align: left;
-  font-weight: 600;
-  color: #4a5568;
-  font-size: 14px;
-}
-
-.custom-driver-input {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-/* Button Styles */
-.btn {
-  padding: 14px 28px;
-  border: none;
-  border-radius: 10px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-align: center;
-  -webkit-tap-highlight-color: transparent;
-  user-select: none;
-}
-
-.btn:active {
-  transform: scale(0.98);
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, #FF7E26 0%, #FF9C59 100%);
-  color: white;
-  box-shadow: 0 4px 15px rgba(255, 126, 38, 0.4);
-}
-
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(255, 126, 38, 0.6);
-}
-
-.btn-secondary {
-  background: #e2e8f0;
-  color: #2d3748;
-}
-
-.btn-secondary:hover {
-  background: #cbd5e0;
-}
-
-.btn-back {
-  background: transparent;
-  color: #FF7E26;
-  padding: 8px 16px;
-  font-size: 14px;
-  align-self: flex-start;
-  border: 2px solid #FF7E26;
-}
-
-.btn-back:hover {
-  background: #FF7E26;
-  color: white;
-}
-
-.btn-logout {
-  background: transparent;
-  color: #FF7E26;
-  padding: 8px 16px;
-  font-size: 14px;
-  border: 2px solid #FF7E26;
-  cursor: pointer;
-  border-radius: 10px;
-  font-weight: 600;
-  transition: all 0.3s ease;
-}
-
-.btn-logout:hover {
-  background: #FF7E26;
-  color: white;
-}
-
-.btn-submit {
-  margin-top: 20px;
-  width: 100%;
-}
-
-/* Input Styles */
-.text-input,
-.select-input,
-.number-input,
-.date-input {
-  width: 100%;
-  max-width: 100%;
-  padding: 12px 16px;
-  border: 2px solid #e2e8f0;
-  border-radius: 10px;
-  font-size: 16px;
-  transition: all 0.3s ease;
-  font-family: inherit;
-  box-sizing: border-box;
-}
-
-.date-input {
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  padding: 12px 16px;
-}
-
-.text-input:focus,
-.select-input:focus,
-.number-input:focus,
-.date-input:focus {
-  outline: none;
-  border-color: #FF7E26;
-  box-shadow: 0 0 0 3px rgba(255, 126, 38, 0.1);
-}
-
-.select-input,
-.date-input {
-  background-color: white;
-}
-
-.text-input:disabled,
-.select-input:disabled,
-.number-input:disabled,
-.date-input:disabled {
-  background: #f7fafc;
-  color: #a0aec0;
-  cursor: not-allowed;
-}
-
-.textarea-input {
-  width: 100%;
-  padding: 12px 16px;
-  border: 2px solid #e2e8f0;
-  border-radius: 10px;
-  font-size: 16px;
-  transition: all 0.3s ease;
-  font-family: inherit;
-  resize: vertical;
-  min-height: 100px;
-}
-
-.textarea-input:focus {
-  outline: none;
-  border-color: #FF7E26;
-  box-shadow: 0 0 0 3px rgba(255, 126, 38, 0.1);
-}
-
-.file-input {
-  width: 100%;
-  padding: 12px 16px;
-  border: 2px solid #e2e8f0;
-  border-radius: 10px;
-  font-size: 16px;
-  transition: all 0.3s ease;
-  font-family: inherit;
-  cursor: pointer;
-}
-
-.file-input:focus {
-  outline: none;
-  border-color: #FF7E26;
-  box-shadow: 0 0 0 3px rgba(255, 126, 38, 0.1);
-}
-
-.file-preview {
-  color: #38a169;
-  font-weight: 600;
-  margin-top: 8px;
-}
-
-/* Truck Grid */
-.truck-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 20px;
-  margin-top: 20px;
-}
-
-.truck-card {
-  background: white;
-  border: 2px solid #e2e8f0;
-  border-radius: 15px;
-  padding: 30px 20px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-align: center;
-  -webkit-tap-highlight-color: transparent;
-  user-select: none;
-}
-
-.truck-card:hover {
-  border-color: #FF7E26;
-  transform: translateY(-5px);
-  box-shadow: 0 10px 30px rgba(255, 126, 38, 0.2);
-}
-
-.truck-card:active {
-  transform: translateY(-2px);
-}
-
-.truck-icon {
-  font-size: 48px;
-  margin-bottom: 10px;
-}
-
-.truck-name {
-  color: #2d3748;
-  font-weight: 600;
-  font-size: 16px;
-}
-
-/* Mode Selection */
-.mode-selection {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 30px;
-  margin-top: 30px;
-}
-
-.mode-card {
-  background: linear-gradient(135deg, #f6f8fb 0%, #ffffff 100%);
-  border: 2px solid #e2e8f0;
-  border-radius: 20px;
-  padding: 40px 30px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-align: center;
-  -webkit-tap-highlight-color: transparent;
-  user-select: none;
-}
-
-.mode-card:hover {
-  border-color: #FF7E26;
-  transform: translateY(-5px);
-  box-shadow: 0 15px 40px rgba(255, 126, 38, 0.2);
-}
-
-.mode-card:active {
-  transform: translateY(-2px);
-}
-
-.mode-icon {
-  font-size: 64px;
-  margin-bottom: 20px;
-}
-
-.mode-card h2 {
-  color: #2d3748;
-  font-size: 24px;
-  margin-bottom: 10px;
-  font-weight: 700;
-}
-
-.mode-card p {
-  color: #718096;
-  font-size: 16px;
-}
-
-/* Form Styles */
-.tracking-form {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  margin-top: 30px;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.form-group label {
-  font-weight: 600;
-  color: #4a5568;
-  font-size: 14px;
-}
-
-.form-group input,
-.form-group select,
-.form-group textarea {
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-}
-
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-}
-
-/* Incomplete Entry Notice */
-.incomplete-entry-notice {
-  background: #fff3cd;
-  border: 2px solid #ffc107;
-  border-radius: 10px;
-  padding: 20px;
-  margin-bottom: 20px;
-}
-
-.incomplete-entry-notice strong {
-  color: #856404;
-  font-size: 18px;
-  display: block;
-  margin-bottom: 10px;
-}
-
-.incomplete-entry-notice p {
-  color: #856404;
-  margin: 5px 0;
-}
-
-/* Cross State Line Modal */
-.cross-state-modal {
-  background: #e3f2fd;
-  border: 2px solid #2196f3;
-  border-radius: 15px;
-  padding: 25px;
-  margin-bottom: 20px;
-  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.2);
-}
-
-.cross-state-modal h3 {
-  color: #0d47a1;
-  font-size: 20px;
-  margin-bottom: 10px;
-  font-weight: 700;
-}
-
-.cross-state-modal p {
-  color: #0d47a1;
-  margin-bottom: 20px;
-  font-size: 16px;
-}
-
-.cross-state-modal .tracking-form {
-  margin-top: 0;
-}
-
-/* GPS Detection Notice */
-.gps-detection-notice {
-  background: #e8f5e9;
-  border: 2px solid #4caf50;
-  border-radius: 10px;
-  padding: 20px;
-  margin-bottom: 20px;
-  animation: pulse 2s ease-in-out infinite;
-}
-
-.gps-detection-notice strong {
-  color: #2e7d32;
-  font-size: 18px;
-  display: block;
-  margin-bottom: 10px;
-}
-
-.gps-detection-notice p {
-  color: #2e7d32;
-  margin: 5px 0;
-  font-size: 15px;
-}
-
-@keyframes pulse {
-  0%, 100% {
-    box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4);
-  }
-  50% {
-    box-shadow: 0 0 0 10px rgba(76, 175, 80, 0);
-  }
-}
-
-/* GPS Permission Notice */
-.gps-permission-notice {
-  background: #fff3e0;
-  border: 2px solid #ff9800;
-  border-radius: 10px;
-  padding: 20px;
-  margin-bottom: 20px;
-}
-
-.gps-permission-notice strong {
-  color: #e65100;
-  font-size: 18px;
-  display: block;
-  margin-bottom: 10px;
-}
-
-.gps-permission-notice p {
-  color: #e65100;
-  margin: 5px 0;
-  font-size: 14px;
-}
-
-.info-message {
-  background: #e3f2fd;
-  border: 2px solid #2196f3;
-  border-radius: 10px;
-  padding: 16px;
-  text-align: center;
-  color: #0d47a1;
-  font-weight: 600;
-  margin-bottom: 20px;
-}
-
-/* Calculation Display */
-.calculation-display {
-  background: linear-gradient(135deg, #FF7E26 0%, #FF9C59 100%);
-  color: white;
-  padding: 20px;
-  border-radius: 10px;
-  text-align: center;
-  font-size: 20px;
-  margin-top: 10px;
-}
-
-/* Status Messages */
-.status-message {
-  padding: 16px;
-  border-radius: 10px;
-  text-align: center;
-  font-weight: 600;
-  margin-top: 20px;
-}
-
-.status-message.success {
-  background: #c6f6d5;
-  color: #22543d;
-  border: 2px solid #9ae6b4;
-}
-
-.status-message.error {
-  background: #fed7d7;
-  color: #742a2a;
-  border: 2px solid #fc8181;
-}
-
-/* Daily Report Specific Styles */
-.daily-report-form {
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-.daily-report-form .subtitle {
-  text-align: center;
-  color: #718096;
-  margin-bottom: 30px;
-  font-size: 18px;
-}
-
-.drivers-section {
-  margin: 30px 0;
-}
-
-.drivers-section h3 {
-  color: #2d3748;
-  font-size: 20px;
-  margin-bottom: 20px;
-  font-weight: 700;
-}
-
-.driver-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 15px;
-  border: 2px solid #e2e8f0;
-  border-radius: 10px;
-  margin-bottom: 10px;
-  transition: all 0.3s ease;
-}
-
-.driver-row:hover {
-  border-color: #FF7E26;
-  background: #FFF4D6;
-}
-
-.driver-name {
-  font-weight: 600;
-  color: #2d3748;
-  min-width: 100px;
-}
-
-.driver-checkboxes {
-  display: flex;
-  gap: 20px;
-}
-
-.checkbox-container {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  font-weight: 500;
-  color: #4a5568;
-}
-
-.checkbox-container input[type="checkbox"] {
-  width: 20px;
-  height: 20px;
-  cursor: pointer;
-  accent-color: #FF7E26;
-}
-
-.checkbox-container input[type="checkbox"]:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-
-.custom-driver-input {
-  min-width: 100px;
-  padding: 8px 12px;
-  border: 2px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #2d3748;
-}
-
-.custom-driver-input:focus {
-  outline: none;
-  border-color: #FF7E26;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  body {
-    padding: 10px;
-  }
-
-  .container {
-    padding: 25px;
-    border-radius: 15px;
-    box-sizing: border-box;
-    overflow-x: hidden;
-  }
-
-  .company-logo {
-    max-width: 250px;
-    margin-bottom: 20px;
-  }
-
-  .header h1 {
-    font-size: 28px;
-  }
-
-  .user-info {
-    font-size: 18px;
-  }
-
-  .login-screen h1 {
-    font-size: 32px;
-  }
-
-  .login-screen h2 {
-    font-size: 22px;
-    margin-bottom: 30px;
-  }
-
-  /* Bigger buttons for easier tapping */
-  .btn {
-    padding: 18px 32px;
-    font-size: 18px;
-    min-height: 56px;
+import React, { useState, useEffect, useCallback } from 'react';
+import './App.css';
+
+// Truck and Driver data
+const TRUCKS = [
+  'Green Semi',
+  'Dump Truck (2525)',
+  '2500',
+  '2502',
+  '2503',
+  '2504',
+  '2507'
+];
+
+const DRIVERS = [
+  'Basil',
+  'Calvin',
+  'Matt',
+  'James',
+  'Nic',
+  'Jerron',
+  'Other'
+];
+
+const BATCH_MANAGERS = [
+  'Batch Manager',
+  'Supervisor'
+];
+
+const STATES = ['Nebraska', 'Kansas'];
+
+function App() {
+  // Authentication state
+  const [currentDriver, setCurrentDriver] = useState('');
+  const [customDriverName, setCustomDriverName] = useState('');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isBatchManager, setIsBatchManager] = useState(false);
+  
+  // Selection state
+  const [selectedTruck, setSelectedTruck] = useState('');
+  const [trackingMode, setTrackingMode] = useState(null); // 'mileage', 'fuel', or 'daily-report'
+  
+  // Animation state
+  const [animationClass, setAnimationClass] = useState('');
+  
+  // Mileage form state
+  const [mileageData, setMileageData] = useState({
+    date: new Date().toISOString().split('T')[0],
+    state: 'Nebraska',
+    mileageStart: '',
+    mileageEnd: ''
+  });
+  
+  // Incomplete entry state
+  const [incompleteEntry, setIncompleteEntry] = useState(null);
+  const [checkingIncomplete, setCheckingIncomplete] = useState(false);
+  
+  // Cross state line state
+  const [showCrossStateModal, setShowCrossStateModal] = useState(false);
+  const [crossStateMileage, setCrossStateMileage] = useState('');
+  const [newState, setNewState] = useState('Kansas');
+  
+  // GPS detection state
+  const [gpsPermission, setGpsPermission] = useState(null); // null, 'granted', 'denied'
+  const [detectedStateCrossing, setDetectedStateCrossing] = useState(false);
+  const [checkingLocation, setCheckingLocation] = useState(false);
+  
+  // Fuel form state
+  const [fuelData, setFuelData] = useState({
+    date: new Date().toISOString().split('T')[0],
+    state: 'Nebraska',
+    gallons: '',
+    cost: '',
+    location: '',
+    fuelPhoto: null
+  });
+  
+  // Daily Report form state
+  const [dailyReportData, setDailyReportData] = useState({
+    name: '',
+    date: new Date().toISOString().split('T')[0],
+    yardsOut: '',
+    tripsOut: '',
+    fuelReading: '',
+    issues: '',
+    issuePhoto: null
+  });
+
+  // Driver work status - initialized with known drivers + 2 blanks
+  const [driverStatus, setDriverStatus] = useState({
+    'James': { halfDay: false, fullDay: false },
+    'Matt': { halfDay: false, fullDay: false },
+    'Calvin': { halfDay: false, fullDay: false },
+    'Jerron': { halfDay: false, fullDay: false },
+    'Nic': { halfDay: false, fullDay: false },
+    'Custom1': { name: '', halfDay: false, fullDay: false },
+    'Custom2': { name: '', halfDay: false, fullDay: false }
+  });
+  
+  // Feedback state
+  const [submitStatus, setSubmitStatus] = useState(null);
+  
+  // Completion screen state
+  const [showCompletionScreen, setShowCompletionScreen] = useState(false);
+  const [completionData, setCompletionData] = useState(null);
+
+  // Check for incomplete mileage entry - wrapped in useCallback
+  const checkForIncompleteEntry = useCallback(async () => {
+    setCheckingIncomplete(true);
+    const driverName = currentDriver === 'Other' ? customDriverName : currentDriver;
+    
+    try {
+      const response = await fetch(
+        `https://mileage-tracker-final.vercel.app/api/get-incomplete-mileage?driver=${encodeURIComponent(driverName)}&truck=${encodeURIComponent(selectedTruck)}`
+      );
+      
+      const data = await response.json();
+      
+      if (data.found) {
+        setIncompleteEntry(data.entry);
+        // Pre-fill the form with the incomplete entry data
+        setMileageData({
+          date: data.entry.date,
+          state: data.entry.state,
+          mileageStart: data.entry.mileageStart.toString(),
+          mileageEnd: ''
+        });
+      } else {
+        setIncompleteEntry(null);
+      }
+    } catch (error) {
+      console.error('Error checking for incomplete entry:', error);
+    } finally {
+      setCheckingIncomplete(false);
+    }
+  }, [currentDriver, customDriverName, selectedTruck]);
+
+  // Determine state from GPS coordinates
+  const getStateFromCoordinates = (latitude, longitude) => {
+    // Nebraska/Kansas border is approximately at 40°N latitude
+    // Nebraska is north of the border, Kansas is south
+    
+    // Rough boundaries:
+    // Nebraska: 40°N to 43°N, -104°W to -95.3°W
+    // Kansas: 37°N to 40°N, -102°W to -94.6°W
+    
+    if (latitude >= 40.0) {
+      return 'Nebraska';
+    } else if (latitude < 40.0 && latitude >= 37.0) {
+      return 'Kansas';
+    }
+    
+    // Default to Nebraska if coordinates are unclear
+    return 'Nebraska';
+  };
+
+  // Check GPS location and detect state crossing
+  const checkGPSLocation = useCallback(() => {
+    if (!incompleteEntry) return;
+    
+    // Don't check if modal is already open
+    if (showCrossStateModal) return;
+    
+    // Check if GPS is available
+    if (!navigator.geolocation) {
+      console.log('Geolocation not supported');
+      return;
+    }
+    
+    setCheckingLocation(true);
+    
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        const detectedState = getStateFromCoordinates(latitude, longitude);
+        
+        console.log(`GPS Location: ${latitude}, ${longitude}`);
+        console.log(`Detected State: ${detectedState}`);
+        console.log(`Shift State: ${incompleteEntry.state}`);
+        
+        // If detected state is different from shift state, prompt user
+        if (detectedState !== incompleteEntry.state) {
+          setDetectedStateCrossing(true);
+          setNewState(detectedState);
+          // Auto-open the cross state modal with detected state
+          setTimeout(() => {
+            setShowCrossStateModal(true);
+          }, 1000); // Small delay to let the page load
+        }
+        
+        setCheckingLocation(false);
+        setGpsPermission('granted');
+      },
+      (error) => {
+        console.log('GPS Error:', error.message);
+        setCheckingLocation(false);
+        
+        if (error.code === 1) {
+          setGpsPermission('denied');
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 60000 // Cache location for 1 minute
+      }
+    );
+  }, [incompleteEntry, showCrossStateModal]);
+
+  // Check for incomplete entries when entering mileage mode
+  useEffect(() => {
+    if (trackingMode === 'mileage' && selectedTruck) {
+      checkForIncompleteEntry();
+    }
+  }, [trackingMode, selectedTruck, checkForIncompleteEntry]);
+
+  // Check GPS location when incomplete entry is found
+  useEffect(() => {
+    if (incompleteEntry && trackingMode === 'mileage') {
+      // Wait a bit for the page to render, then check GPS
+      const timer = setTimeout(() => {
+        checkGPSLocation();
+      }, 1500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [incompleteEntry, trackingMode, checkGPSLocation]);
+
+  // Handle login
+  const handleLogin = () => {
+    const isBatchMgr = BATCH_MANAGERS.includes(currentDriver);
+    
+    if (currentDriver && (currentDriver !== 'Other' || customDriverName.trim())) {
+      setIsLoggedIn(true);
+      setIsBatchManager(isBatchMgr);
+      
+      // Batch managers/supervisors go directly to Daily Report
+      if (isBatchMgr) {
+        setTrackingMode('daily-report');
+      }
+    } else {
+      alert('Please select a driver name');
+    }
+  };
+
+  // Handle logout
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setCurrentDriver('');
+    setCustomDriverName('');
+    setSelectedTruck('');
+    setTrackingMode(null);
+    setIncompleteEntry(null);
+  };
+
+  // Handle truck selection
+  const handleTruckSelect = (truck) => {
+    setAnimationClass('slide-in-right');
+    setSelectedTruck(truck);
+  };
+
+  // Handle mode selection
+  const handleModeSelect = (mode) => {
+    setAnimationClass('slide-in-right');
+    setTrackingMode(mode);
+    setSubmitStatus(null);
+  };
+
+  // Handle back button
+  const handleBack = () => {
+    setAnimationClass('slide-in-left');
+    if (trackingMode) {
+      // If batch manager, logout instead of going back to truck selection
+      if (isBatchManager) {
+        handleLogout();
+        return;
+      }
+      
+      setTrackingMode(null);
+      setIncompleteEntry(null);
+      // Reset forms
+      setMileageData({
+        date: new Date().toISOString().split('T')[0],
+        state: 'Nebraska',
+        mileageStart: '',
+        mileageEnd: ''
+      });
+      setFuelData({
+        date: new Date().toISOString().split('T')[0],
+        state: 'Nebraska',
+        gallons: '',
+        cost: '',
+        location: ''
+      });
+    } else if (selectedTruck) {
+      setSelectedTruck('');
+    }
+  };
+
+  // Handle crossing state line
+  const handleCrossStateLine = async (e) => {
+    e.preventDefault();
+    
+    if (!crossStateMileage || parseFloat(crossStateMileage) <= 0) {
+      setSubmitStatus({ type: 'error', message: 'Please enter a valid mileage reading' });
+      return;
+    }
+    
+    if (parseFloat(crossStateMileage) <= parseFloat(incompleteEntry.mileageStart)) {
+      setSubmitStatus({ type: 'error', message: 'Current mileage must be greater than starting mileage' });
+      return;
+    }
+    
+    const driverName = currentDriver === 'Other' ? customDriverName : currentDriver;
+    
+    try {
+      // Step 1: Complete the current shift in the current state
+      const completeResponse = await fetch('https://mileage-tracker-final.vercel.app/api/mileage', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'complete',
+          entryId: incompleteEntry.id,
+          mileageEnd: parseFloat(crossStateMileage)
+        }),
+      });
+      
+      if (!completeResponse.ok) {
+        throw new Error('Failed to complete current shift');
+      }
+      
+      // Step 2: Start a new shift in the new state
+      const startResponse = await fetch('https://mileage-tracker-final.vercel.app/api/mileage', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'start',
+          driver: driverName,
+          truck: selectedTruck,
+          date: mileageData.date,
+          state: newState,
+          mileageStart: parseFloat(crossStateMileage),
+          timestamp: new Date().toISOString()
+        }),
+      });
+      
+      if (!startResponse.ok) {
+        throw new Error('Failed to start new shift in new state');
+      }
+      
+      // Success! Close modal and refresh incomplete entry
+      setShowCrossStateModal(false);
+      setCrossStateMileage('');
+      setDetectedStateCrossing(false);
+      setSubmitStatus({ 
+        type: 'success', 
+        message: `✅ Crossed into ${newState}! Continue driving and complete shift when done.` 
+      });
+      
+      // Refresh to get the new incomplete entry
+      setTimeout(() => {
+        checkForIncompleteEntry();
+      }, 1000);
+      
+    } catch (error) {
+      console.error('Error crossing state line:', error);
+      setSubmitStatus({ type: 'error', message: 'Failed to process state line crossing. Please try again.' });
+    }
+  };
+
+  // Submit mileage data to Notion
+  const submitMileageData = async (e) => {
+    e.preventDefault();
+    
+    const driverName = currentDriver === 'Other' ? customDriverName : currentDriver;
+    
+    // If completing an existing entry
+    if (incompleteEntry) {
+      const totalMiles = parseFloat(mileageData.mileageEnd) - parseFloat(mileageData.mileageStart);
+      
+      if (totalMiles < 0) {
+        alert('Ending mileage must be greater than starting mileage');
+        return;
+      }
+
+      try {
+        // Update the existing Notion entry
+        const response = await fetch('https://mileage-tracker-final.vercel.app/api/mileage', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            action: 'complete',
+            entryId: incompleteEntry.id,
+            mileageEnd: parseFloat(mileageData.mileageEnd),
+            totalMiles: totalMiles
+          }),
+        });
+
+        if (response.ok) {
+          // Store completion data
+          setCompletionData({
+            driver: driverName,
+            truck: selectedTruck,
+            state: mileageData.state,
+            mileageStart: mileageData.mileageStart,
+            mileageEnd: mileageData.mileageEnd,
+            totalMiles: totalMiles
+          });
+          
+          // Show completion screen
+          setShowCompletionScreen(true);
+          setIncompleteEntry(null);
+          
+          // Reset form
+          setMileageData({
+            date: new Date().toISOString().split('T')[0],
+            state: 'Nebraska',
+            mileageStart: '',
+            mileageEnd: ''
+          });
+        } else {
+          throw new Error('Failed to submit data');
+        }
+      } catch (error) {
+        console.error('Error completing mileage:', error);
+        setSubmitStatus({ type: 'error', message: 'Failed to submit data. Please try again.' });
+      }
+    } else {
+      // Starting a new entry
+      const payload = {
+        action: 'start',
+        driver: driverName,
+        truck: selectedTruck,
+        date: mileageData.date,
+        state: mileageData.state,
+        mileageStart: parseFloat(mileageData.mileageStart),
+        timestamp: new Date().toISOString()
+      };
+
+      try {
+        const response = await fetch('https://mileage-tracker-final.vercel.app/api/mileage', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (response.ok) {
+          setSubmitStatus({ type: 'success', message: '✅ Shift started! Come back later to enter your ending mileage.' });
+          // Reset form
+          setMileageData({
+            date: new Date().toISOString().split('T')[0],
+            state: 'Nebraska',
+            mileageStart: '',
+            mileageEnd: ''
+          });
+        } else {
+          throw new Error('Failed to submit data');
+        }
+      } catch (error) {
+        console.error('Error starting mileage:', error);
+        setSubmitStatus({ type: 'error', message: 'Failed to submit data. Please try again.' });
+      }
+    }
+  };
+
+  // Submit fuel data to Notion
+  const submitFuelData = async (e) => {
+    e.preventDefault();
+
+    const driverName = currentDriver === 'Other' ? customDriverName : currentDriver;
+    const isSemi = selectedTruck === 'Semi';
+    
+    const payload = {
+      driver: driverName,
+      truck: selectedTruck,
+      date: fuelData.date,
+      state: fuelData.state,
+      gallons: parseFloat(fuelData.gallons),
+      cost: isSemi ? parseFloat(fuelData.cost) : null,
+      location: isSemi ? (fuelData.location || 'N/A') : null,
+      fuelPhoto: isSemi ? fuelData.fuelPhoto : null,
+      timestamp: new Date().toISOString()
+    };
+
+    try {
+      const response = await fetch('https://mileage-tracker-final.vercel.app/api/fuel', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        // Reset fuel form
+        setFuelData({
+          date: new Date().toISOString().split('T')[0],
+          state: 'Nebraska',
+          gallons: '',
+          cost: '',
+          location: '',
+          fuelPhoto: null
+        });
+        
+        // Seamlessly redirect to mileage form with animation
+        setAnimationClass('slide-in-right');
+        setTrackingMode('mileage');
+      } else {
+        throw new Error('Failed to submit data');
+      }
+    } catch (error) {
+      console.error('Error submitting fuel:', error);
+      setSubmitStatus({ type: 'error', message: 'Failed to submit data. Please try again.' });
+    }
+  };
+
+  // Helper functions for Daily Report
+  const handleDriverCheckbox = (driver, type) => {
+    setDriverStatus({
+      ...driverStatus,
+      [driver]: {
+        halfDay: type === 'halfDay' ? !driverStatus[driver].halfDay : false,
+        fullDay: type === 'fullDay' ? !driverStatus[driver].fullDay : false
+      }
+    });
+  };
+
+  const handleCustomDriverName = (key, name) => {
+    setDriverStatus({
+      ...driverStatus,
+      [key]: {
+        ...driverStatus[key],
+        name: name
+      }
+    });
+  };
+
+  const handlePhotoUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setDailyReportData({...dailyReportData, issuePhoto: reader.result});
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleFuelPhotoUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFuelData({...fuelData, fuelPhoto: reader.result});
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Submit daily report to Notion
+  const submitDailyReport = async (e) => {
+    e.preventDefault();
+    
+    const submitterName = isBatchManager ? currentDriver : customDriverName;
+    
+    // Build drivers array from driver status
+    const drivers = [];
+    Object.keys(driverStatus).forEach(key => {
+      const status = driverStatus[key];
+      const driverName = key.startsWith('Custom') ? status.name : key;
+      
+      if (driverName && (status.halfDay || status.fullDay)) {
+        drivers.push({
+          name: driverName,
+          halfDay: status.halfDay,
+          fullDay: status.fullDay
+        });
+      }
+    });
+    
+    const payload = {
+      name: dailyReportData.name,
+      date: dailyReportData.date,
+      yardsOut: parseFloat(dailyReportData.yardsOut),
+      tripsOut: parseFloat(dailyReportData.tripsOut),
+      drivers: drivers,
+      fuelReading: parseFloat(dailyReportData.fuelReading),
+      issues: dailyReportData.issues || 'N/A',
+      issuePhoto: dailyReportData.issuePhoto,
+      preparedBy: submitterName,
+      timestamp: new Date().toISOString()
+    };
+
+    try {
+      const response = await fetch('https://mileage-tracker-final.vercel.app/api/daily-report', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        setSubmitStatus({ type: 'success', message: '✅ Daily report submitted successfully!' });
+        
+        // Reset form
+        setDailyReportData({
+          name: '',
+          date: new Date().toISOString().split('T')[0],
+          yardsOut: '',
+          tripsOut: '',
+          fuelReading: '',
+          issues: '',
+          issuePhoto: null
+        });
+        
+        // Reset driver statuses
+        setDriverStatus({
+          'James': { halfDay: false, fullDay: false },
+          'Matt': { halfDay: false, fullDay: false },
+          'Calvin': { halfDay: false, fullDay: false },
+          'Jerron': { halfDay: false, fullDay: false },
+          'Nic': { halfDay: false, fullDay: false },
+          'Custom1': { name: '', halfDay: false, fullDay: false },
+          'Custom2': { name: '', halfDay: false, fullDay: false }
+        });
+      } else {
+        throw new Error('Failed to submit data');
+      }
+    } catch (error) {
+      console.error('Error submitting daily report:', error);
+      setSubmitStatus({ type: 'error', message: 'Failed to submit data. Please try again.' });
+    }
+  };
+
+  // Render login screen
+  if (!isLoggedIn) {
+    return (
+      <div className="App">
+        <div className="container">
+          <div className="login-screen">
+            <img src="/mccook-logo.png" alt="McCook Concrete Inc." className="company-logo" />
+            <h2>Mileage & Fuel Tracker</h2>
+            
+            <div className="login-form">
+              <label htmlFor="driver-select">Select Your Name:</label>
+              <select
+                id="driver-select"
+                value={currentDriver}
+                onChange={(e) => setCurrentDriver(e.target.value)}
+                required
+              >
+                <option value="">-- Select Your Name --</option>
+                
+                <optgroup label="Batch Managers">
+                  {BATCH_MANAGERS.map(manager => (
+                    <option key={manager} value={manager}>{manager}</option>
+                  ))}
+                </optgroup>
+                
+                <optgroup label="Drivers">
+                  {DRIVERS.map(driver => (
+                    <option key={driver} value={driver}>{driver}</option>
+                  ))}
+                </optgroup>
+              </select>
+
+              {currentDriver === 'Other' && (
+                <div className="custom-driver-input">
+                  <label htmlFor="custom-driver">Enter Your Name:</label>
+                  <input
+                    id="custom-driver"
+                    type="text"
+                    value={customDriverName}
+                    onChange={(e) => setCustomDriverName(e.target.value)}
+                    placeholder="Enter your name"
+                    className="text-input"
+                  />
+                </div>
+              )}
+
+              <button onClick={handleLogin} className="btn btn-primary">
+                Login
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
-  .btn-back,
-  .btn-logout {
-    padding: 12px 20px;
-    font-size: 16px;
-    min-height: 48px;
+  // Render truck selection screen
+  if (!selectedTruck) {
+    const displayName = currentDriver === 'Other' ? customDriverName : currentDriver;
+    return (
+      <div className="App">
+        <div className={`container ${animationClass}`}>
+          <div className="header">
+            <h1>Select Truck</h1>
+            <p className="user-info">Driver: {displayName}</p>
+            <button onClick={handleLogout} className="btn btn-secondary">
+              Logout
+            </button>
+          </div>
+
+          <div className="truck-grid">
+            {TRUCKS.map(truck => (
+              <button
+                key={truck}
+                onClick={() => handleTruckSelect(truck)}
+                className="truck-card"
+              >
+                <div className="truck-icon">🚛</div>
+                <div className="truck-name">{truck}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
   }
 
-  /* Bigger input fields */
-  .text-input,
-  .select-input,
-  .number-input,
-  .date-input {
-    padding: 16px 18px;
-    font-size: 18px;
-    min-height: 56px;
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
+  // Render tracking mode selection
+  if (!trackingMode) {
+    const displayName = currentDriver === 'Other' ? customDriverName : currentDriver;
+    return (
+      <div className="App">
+        <div className={`container ${animationClass}`}>
+          <div className="header">
+            <button onClick={handleBack} className="btn btn-back">
+              ← Back
+            </button>
+            <h1>Select Tracking Mode</h1>
+            <p className="user-info">Driver: {displayName} | Truck: {selectedTruck}</p>
+          </div>
+
+          <div className="mode-selection">
+            <button
+              onClick={() => handleModeSelect('mileage')}
+              className="mode-card"
+            >
+              <div className="mode-icon">📍</div>
+              <h2>Track Mileage</h2>
+              <p>Record trip mileage by state</p>
+            </button>
+
+            <button
+              onClick={() => handleModeSelect('fuel')}
+              className="mode-card"
+            >
+              <div className="mode-icon">⛽</div>
+              <h2>Track Fuel</h2>
+              <p>Record fuel purchases</p>
+            </button>
+
+            {isBatchManager && (
+              <button 
+                onClick={() => handleModeSelect('daily-report')} 
+                className="mode-card"
+              >
+                <div className="mode-icon">📋</div>
+                <h2>Daily Report</h2>
+                <p>Submit batch manager daily report</p>
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
   }
 
-  .textarea-input {
-    padding: 16px 18px;
-    font-size: 18px;
-    min-height: 120px;
+  // Render mileage tracking form
+  if (trackingMode === 'mileage') {
+    const displayName = currentDriver === 'Other' ? customDriverName : currentDriver;
+    const totalMiles = mileageData.mileageEnd && mileageData.mileageStart 
+      ? parseFloat(mileageData.mileageEnd) - parseFloat(mileageData.mileageStart)
+      : 0;
+
+    // Show completion screen after successful submission
+    if (showCompletionScreen && completionData) {
+      return (
+        <div className="App">
+          <div className={`container ${animationClass}`}>
+            <div className="completion-screen">
+              <div className="completion-icon">✅</div>
+              <h1>Shift Completed!</h1>
+              <p className="completion-message">Your mileage has been successfully recorded.</p>
+              
+              <div className="completion-summary">
+                <h3>Trip Summary</h3>
+                <div className="summary-row">
+                  <span className="summary-label">Driver:</span>
+                  <span className="summary-value">{completionData.driver}</span>
+                </div>
+                <div className="summary-row">
+                  <span className="summary-label">Truck:</span>
+                  <span className="summary-value">{completionData.truck}</span>
+                </div>
+                <div className="summary-row">
+                  <span className="summary-label">State:</span>
+                  <span className="summary-value">{completionData.state}</span>
+                </div>
+                <div className="summary-row">
+                  <span className="summary-label">Starting Mileage:</span>
+                  <span className="summary-value">{completionData.mileageStart}</span>
+                </div>
+                <div className="summary-row">
+                  <span className="summary-label">Ending Mileage:</span>
+                  <span className="summary-value">{completionData.mileageEnd}</span>
+                </div>
+                <div className="summary-row total">
+                  <span className="summary-label">Total Miles:</span>
+                  <span className="summary-value">{completionData.totalMiles.toFixed(1)} miles</span>
+                </div>
+              </div>
+
+              <button 
+                onClick={() => {
+                  setShowCompletionScreen(false);
+                  setCompletionData(null);
+                  setTrackingMode(null);
+                  setAnimationClass('slide-in-left');
+                }}
+                className="btn btn-primary btn-large"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="App">
+        <div className={`container ${animationClass}`}>
+          <div className="header">
+            <button onClick={handleBack} className="btn btn-back">
+              ← Back
+            </button>
+            <h1>{incompleteEntry ? 'Complete Shift' : 'Start Shift'}</h1>
+            <p className="user-info">Driver: {displayName} | Truck: {selectedTruck}</p>
+          </div>
+
+          {checkingIncomplete && (
+            <div className="info-message">
+              Checking for incomplete entries...
+            </div>
+          )}
+
+          {incompleteEntry && (
+            <div className="incomplete-entry-notice">
+              📍 <strong>Active Shift Found</strong>
+              <p>Started: {new Date(incompleteEntry.createdTime).toLocaleString()}</p>
+              <p>Starting Mileage: {incompleteEntry.mileageStart}</p>
+              <p>State: {incompleteEntry.state}</p>
+            </div>
+          )}
+
+          {checkingLocation && (
+            <div className="info-message">
+              🌍 Checking your location...
+            </div>
+          )}
+
+          {detectedStateCrossing && !showCrossStateModal && (
+            <div className="gps-detection-notice">
+              📍 <strong>State Crossing Detected!</strong>
+              <p>GPS shows you're now in <strong>{newState}</strong></p>
+              <p>Your shift started in <strong>{incompleteEntry.state}</strong></p>
+              <p>Click "Cross State Line" below to split your shift.</p>
+            </div>
+          )}
+
+          {gpsPermission === 'denied' && incompleteEntry && (
+            <div className="gps-permission-notice">
+              ℹ️ <strong>Location Permission Needed</strong>
+              <p>Enable location access to auto-detect state crossings.</p>
+              <p>You can still use the "Cross State Line" button manually.</p>
+            </div>
+          )}
+
+          {incompleteEntry && !showCrossStateModal && (
+            <button 
+              type="button"
+              onClick={() => {
+                setShowCrossStateModal(true);
+                // Set the opposite state as default
+                setNewState(incompleteEntry.state === 'Nebraska' ? 'Kansas' : 'Nebraska');
+              }}
+              className="btn btn-secondary"
+              style={{ marginBottom: '20px', width: '100%' }}
+            >
+              🚗 Cross State Line
+            </button>
+          )}
+
+          {showCrossStateModal && (
+            <div className="cross-state-modal">
+              <h3>{detectedStateCrossing ? '📍 GPS Detected State Crossing' : 'Crossing State Line'}</h3>
+              <p>You're leaving <strong>{incompleteEntry.state}</strong></p>
+              {detectedStateCrossing && (
+                <p style={{ color: '#2196f3', fontWeight: 600 }}>
+                  GPS detected you're now in {newState}
+                </p>
+              )}
+              
+              <form onSubmit={handleCrossStateLine} className="tracking-form">
+                <div className="form-group">
+                  <label htmlFor="cross-mileage">Current Odometer Reading:</label>
+                  <input
+                    id="cross-mileage"
+                    type="number"
+                    inputMode="decimal"
+                    step="0.1"
+                    value={crossStateMileage}
+                    onChange={(e) => setCrossStateMileage(e.target.value)}
+                    placeholder="Enter current mileage"
+                    required
+                    autoFocus
+                    className="text-input"
+                  />
+                  <small style={{ color: '#718096', marginTop: '5px', display: 'block' }}>
+                    Must be greater than {incompleteEntry.mileageStart}
+                  </small>
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="new-state">Entering State:</label>
+                  <select
+                    id="new-state"
+                    value={newState}
+                    onChange={(e) => setNewState(e.target.value)}
+                    required
+                    className="select-input"
+                  >
+                    {STATES.map(state => (
+                      <option key={state} value={state}>{state}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+                  <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>
+                    Confirm State Crossing
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      setShowCrossStateModal(false);
+                      setCrossStateMileage('');
+                      setDetectedStateCrossing(false);
+                    }}
+                    className="btn btn-secondary" 
+                    style={{ flex: 1 }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {!showCrossStateModal && (
+            <form onSubmit={submitMileageData} className="tracking-form">
+            <div className="form-group">
+              <label htmlFor="mileage-date">Date:</label>
+              <input
+                id="mileage-date"
+                type="date"
+                value={mileageData.date}
+                onChange={(e) => setMileageData({...mileageData, date: e.target.value})}
+                required
+                disabled={!!incompleteEntry}
+                className="text-input"
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="mileage-state">State:</label>
+              <select
+                id="mileage-state"
+                value={mileageData.state}
+                onChange={(e) => setMileageData({...mileageData, state: e.target.value})}
+                required
+                disabled={!!incompleteEntry}
+                className="select-input"
+              >
+                {STATES.map(state => (
+                  <option key={state} value={state}>{state}</option>
+                ))}
+              </select>
+            </div>
+
+            {!incompleteEntry && (
+              <div className="form-group">
+                <label htmlFor="mileage-start">Starting Mileage:</label>
+                <input
+                  id="mileage-start"
+                  type="number"
+                  inputMode="decimal"
+                  step="0.1"
+                  value={mileageData.mileageStart}
+                  onChange={(e) => setMileageData({...mileageData, mileageStart: e.target.value})}
+                  placeholder="Enter starting odometer reading"
+                  required
+                  className="text-input"
+                />
+              </div>
+            )}
+
+            {incompleteEntry && (
+              <div className="form-group">
+                <label htmlFor="mileage-end">Ending Mileage:</label>
+                <input
+                  id="mileage-end"
+                  type="number"
+                  inputMode="decimal"
+                  step="0.1"
+                  value={mileageData.mileageEnd}
+                  onChange={(e) => setMileageData({...mileageData, mileageEnd: e.target.value})}
+                  placeholder="Enter ending odometer reading"
+                  required
+                  className="text-input"
+                />
+              </div>
+            )}
+
+            {totalMiles > 0 && (
+              <div className="calculation-display">
+                <strong>Total Miles:</strong> {totalMiles.toFixed(1)} miles
+              </div>
+            )}
+
+            <button type="submit" className="btn btn-primary btn-submit">
+              {incompleteEntry ? 'Complete Shift' : 'Start Shift'}
+            </button>
+
+            {submitStatus && (
+              <div className={`status-message ${submitStatus.type}`}>
+                {submitStatus.message}
+              </div>
+            )}
+          </form>
+          )}
+        </div>
+      </div>
+    );
   }
 
-  .file-input {
-    padding: 16px 18px;
-    font-size: 18px;
-    min-height: 56px;
+  // Render fuel tracking form
+  if (trackingMode === 'fuel') {
+    const displayName = currentDriver === 'Other' ? customDriverName : currentDriver;
+    const isSemi = selectedTruck === 'Green Semi';
+    const costPerGallon = isSemi && fuelData.gallons && fuelData.cost
+      ? (parseFloat(fuelData.cost) / parseFloat(fuelData.gallons)).toFixed(2)
+      : 0;
+
+    return (
+      <div className="App">
+        <div className={`container ${animationClass}`}>
+          <div className="header">
+            <button onClick={handleBack} className="btn btn-back">
+              ← Back
+            </button>
+            <h1>Track Fuel</h1>
+            <p className="user-info">Driver: {displayName} | Truck: {selectedTruck}</p>
+          </div>
+
+          <form onSubmit={submitFuelData} className="tracking-form">
+            <div className="form-group">
+              <label htmlFor="fuel-date">Date:</label>
+              <input
+                id="fuel-date"
+                type="date"
+                value={fuelData.date}
+                onChange={(e) => setFuelData({...fuelData, date: e.target.value})}
+                required
+                className="text-input"
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="fuel-state">State:</label>
+              <select
+                id="fuel-state"
+                value={fuelData.state}
+                onChange={(e) => setFuelData({...fuelData, state: e.target.value})}
+                required
+                className="select-input"
+              >
+                {STATES.map(state => (
+                  <option key={state} value={state}>{state}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="fuel-gallons">{isSemi ? 'Gallons Purchased:' : 'Gallons Filled:'}</label>
+              <input
+                id="fuel-gallons"
+                type="number"
+                inputMode="decimal"
+                step="0.01"
+                value={fuelData.gallons}
+                onChange={(e) => setFuelData({...fuelData, gallons: e.target.value})}
+                placeholder="Enter gallons"
+                required
+                className="text-input"
+              />
+            </div>
+
+            {isSemi && (
+              <>
+                <div className="form-group">
+                  <label htmlFor="fuel-cost">Total Cost ($):</label>
+                  <input
+                    id="fuel-cost"
+                    type="number"
+                    inputMode="decimal"
+                    step="0.01"
+                    value={fuelData.cost}
+                    onChange={(e) => setFuelData({...fuelData, cost: e.target.value})}
+                    placeholder="Enter total cost"
+                    required
+                    className="text-input"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="fuel-location">Location (Optional):</label>
+                  <input
+                    id="fuel-location"
+                    type="text"
+                    value={fuelData.location}
+                    onChange={(e) => setFuelData({...fuelData, location: e.target.value})}
+                    placeholder="e.g., Shell - McCook"
+                    className="text-input"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="fuel-photo">Receipt Photo (Optional):</label>
+                  <input
+                    id="fuel-photo"
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    onChange={handleFuelPhotoUpload}
+                    className="file-input"
+                  />
+                  {fuelData.fuelPhoto && (
+                    <p className="file-preview">✅ Photo attached</p>
+                  )}
+                </div>
+
+                {costPerGallon > 0 && (
+                  <div className="calculation-display">
+                    <strong>Price per Gallon:</strong> ${costPerGallon}
+                  </div>
+                )}
+              </>
+            )}
+
+            <button type="submit" className="btn btn-primary btn-submit">
+              Submit Fuel Data
+            </button>
+
+            {submitStatus && (
+              <div className={`status-message ${submitStatus.type}`}>
+                {submitStatus.message}
+              </div>
+            )}
+          </form>
+        </div>
+      </div>
+    );
   }
 
-  /* Labels more prominent */
-  .form-group label {
-    font-size: 16px;
-    font-weight: 700;
-    margin-bottom: 8px;
+  // Daily Report form
+  if (trackingMode === 'daily-report') {
+    const predefinedDrivers = ['James', 'Matt', 'Calvin', 'Jerron', 'Nic'];
+    const customDrivers = ['Custom1', 'Custom2'];
+    
+    return (
+      <div className="App">
+        <div className={`container ${animationClass}`}>
+          <div className="header">
+            <button onClick={handleBack} className="btn-back">← Back</button>
+            <button onClick={handleLogout} className="btn-logout">Logout</button>
+          </div>
+
+          <h2>📋 MCI Daily Tab Sheet</h2>
+          <p className="subtitle">Prepared by: {currentDriver}</p>
+
+          <form onSubmit={submitDailyReport} className="tracking-form daily-report-form">
+            <div className="form-group">
+              <label htmlFor="report-name">Name:</label>
+              <input
+                id="report-name"
+                type="text"
+                value={dailyReportData.name}
+                onChange={(e) => setDailyReportData({...dailyReportData, name: e.target.value})}
+                placeholder="Enter your name"
+                required
+                className="text-input"
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="report-date">Date:</label>
+              <input
+                id="report-date"
+                type="date"
+                value={dailyReportData.date}
+                onChange={(e) => setDailyReportData({...dailyReportData, date: e.target.value})}
+                required
+                className="date-input"
+              />
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="yards-out">Yards Out:</label>
+                <input
+                  id="yards-out"
+                  type="number"
+                  step="0.01"
+                  value={dailyReportData.yardsOut}
+                  onChange={(e) => setDailyReportData({...dailyReportData, yardsOut: e.target.value})}
+                  placeholder="e.g., 4"
+                  required
+                  className="number-input"
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="trips-out">Trips Out:</label>
+                <input
+                  id="trips-out"
+                  type="number"
+                  value={dailyReportData.tripsOut}
+                  onChange={(e) => setDailyReportData({...dailyReportData, tripsOut: e.target.value})}
+                  placeholder="e.g., 1"
+                  required
+                  className="number-input"
+                />
+              </div>
+            </div>
+
+            <div className="drivers-section">
+              <h3>Drivers:</h3>
+              
+              {predefinedDrivers.map(driver => (
+                <div key={driver} className="driver-row">
+                  <span className="driver-name">{driver}</span>
+                  <div className="driver-checkboxes">
+                    <label className="checkbox-container">
+                      <input
+                        type="checkbox"
+                        checked={driverStatus[driver].halfDay}
+                        onChange={() => handleDriverCheckbox(driver, 'halfDay')}
+                      />
+                      <span>Half Day</span>
+                    </label>
+                    <label className="checkbox-container">
+                      <input
+                        type="checkbox"
+                        checked={driverStatus[driver].fullDay}
+                        onChange={() => handleDriverCheckbox(driver, 'fullDay')}
+                      />
+                      <span>Full Day</span>
+                    </label>
+                  </div>
+                </div>
+              ))}
+
+              {customDrivers.map(key => (
+                <div key={key} className="driver-row custom-driver">
+                  <input
+                    type="text"
+                    value={driverStatus[key].name}
+                    onChange={(e) => handleCustomDriverName(key, e.target.value)}
+                    placeholder="Other driver name..."
+                    className="custom-driver-input"
+                  />
+                  <div className="driver-checkboxes">
+                    <label className="checkbox-container">
+                      <input
+                        type="checkbox"
+                        checked={driverStatus[key].halfDay}
+                        onChange={() => handleDriverCheckbox(key, 'halfDay')}
+                        disabled={!driverStatus[key].name}
+                      />
+                      <span>Half Day</span>
+                    </label>
+                    <label className="checkbox-container">
+                      <input
+                        type="checkbox"
+                        checked={driverStatus[key].fullDay}
+                        onChange={() => handleDriverCheckbox(key, 'fullDay')}
+                        disabled={!driverStatus[key].name}
+                      />
+                      <span>Full Day</span>
+                    </label>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="fuel-reading">End of Day Fuel Tank Reading:</label>
+              <input
+                id="fuel-reading"
+                type="number"
+                step="0.1"
+                value={dailyReportData.fuelReading}
+                onChange={(e) => setDailyReportData({...dailyReportData, fuelReading: e.target.value})}
+                placeholder="e.g., 14642"
+                required
+                className="number-input"
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="issues">Issues (Optional):</label>
+              <textarea
+                id="issues"
+                value={dailyReportData.issues}
+                onChange={(e) => setDailyReportData({...dailyReportData, issues: e.target.value})}
+                placeholder="Enter any issues or leave blank for N/A"
+                rows="4"
+                className="textarea-input"
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="issue-photo">Issue Photo (Optional):</label>
+              <input
+                id="issue-photo"
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={handlePhotoUpload}
+                className="file-input"
+              />
+              {dailyReportData.issuePhoto && (
+                <p className="file-preview">✅ Photo attached</p>
+              )}
+            </div>
+
+            <button type="submit" className="btn btn-primary btn-submit">
+              Submit Daily Report
+            </button>
+
+            {submitStatus && (
+              <div className={`status-message ${submitStatus.type}`}>
+                {submitStatus.message}
+              </div>
+            )}
+          </form>
+        </div>
+      </div>
+    );
   }
 
-  /* Truck grid optimized for mobile */
-  .truck-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 15px;
-  }
-
-  .truck-card {
-    padding: 25px 15px;
-    min-height: 120px;
-  }
-
-  .truck-icon {
-    font-size: 42px;
-  }
-
-  .truck-name {
-    font-size: 15px;
-  }
-
-  /* Mode cards stack on mobile */
-  .mode-selection {
-    grid-template-columns: 1fr;
-    gap: 20px;
-  }
-
-  .mode-card {
-    padding: 35px 25px;
-  }
-
-  .mode-icon {
-    font-size: 56px;
-  }
-
-  .mode-card h2 {
-    font-size: 22px;
-  }
-
-  .mode-card p {
-    font-size: 17px;
-  }
-
-  /* Form improvements */
-  .form-row {
-    grid-template-columns: 1fr;
-    gap: 20px;
-  }
-
-  .tracking-form {
-    gap: 25px;
-    width: 100%;
-  }
-
-  /* Calculation display bigger */
-  .calculation-display {
-    font-size: 22px;
-    padding: 22px;
-  }
-
-  /* Status messages more prominent */
-  .status-message {
-    font-size: 17px;
-    padding: 18px;
-  }
-
-  /* Driver section optimized */
-  .driver-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 15px;
-    padding: 18px;
-  }
-
-  .driver-name {
-    font-size: 17px;
-    font-weight: 700;
-  }
-
-  .driver-checkboxes {
-    width: 100%;
-    justify-content: space-around;
-  }
-
-  .checkbox-container {
-    font-size: 16px;
-  }
-
-  .checkbox-container input[type="checkbox"] {
-    width: 24px;
-    height: 24px;
-  }
-
-  /* Incomplete entry notice */
-  .incomplete-entry-notice {
-    padding: 18px;
-  }
-
-  .incomplete-entry-notice strong {
-    font-size: 19px;
-  }
-
-  .incomplete-entry-notice p {
-    font-size: 16px;
-  }
+  return null;
 }
 
-@media (max-width: 480px) {
-  .container {
-    padding: 20px;
-    border-radius: 12px;
-    box-sizing: border-box;
-    overflow-x: hidden;
-  }
-
-  .company-logo {
-    max-width: 200px;
-  }
-
-  .header h1 {
-    font-size: 24px;
-  }
-
-  .login-screen h1 {
-    font-size: 28px;
-  }
-
-  .login-screen h2 {
-    font-size: 20px;
-  }
-
-  /* Single column truck grid on small phones */
-  .truck-grid {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-
-  .truck-card {
-    padding: 20px 15px;
-  }
-
-  /* Buttons still big enough to tap */
-  .btn {
-    padding: 16px 28px;
-    font-size: 17px;
-  }
-
-  .mode-card {
-    padding: 30px 20px;
-  }
-
-  .mode-icon {
-    font-size: 48px;
-  }
-}
+export default App;
