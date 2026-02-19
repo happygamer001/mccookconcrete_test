@@ -479,6 +479,60 @@ body {
   margin-top: 0;
 }
 
+/* GPS Detection Notice */
+.gps-detection-notice {
+  background: #e8f5e9;
+  border: 2px solid #4caf50;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 20px;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.gps-detection-notice strong {
+  color: #2e7d32;
+  font-size: 18px;
+  display: block;
+  margin-bottom: 10px;
+}
+
+.gps-detection-notice p {
+  color: #2e7d32;
+  margin: 5px 0;
+  font-size: 15px;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(76, 175, 80, 0);
+  }
+}
+
+/* GPS Permission Notice */
+.gps-permission-notice {
+  background: #fff3e0;
+  border: 2px solid #ff9800;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.gps-permission-notice strong {
+  color: #e65100;
+  font-size: 18px;
+  display: block;
+  margin-bottom: 10px;
+}
+
+.gps-permission-notice p {
+  color: #e65100;
+  margin: 5px 0;
+  font-size: 14px;
+}
+
 .info-message {
   background: #e3f2fd;
   border: 2px solid #2196f3;
