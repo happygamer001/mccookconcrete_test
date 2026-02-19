@@ -3,17 +3,13 @@ import './App.css';
 
 // Truck and Driver data
 const TRUCKS = [
-  'Green Truck (GT01)',
-  'Red Truck (RT01)',
-  'Dump Truck (DT01)',
+  'Green Semi',
+  'Dump Truck (2525)',
   '2500',
   '2502',
   '2503',
   '2504',
-  '2507',
-  '2204',
-  '3743',
-  'Semi'
+  '2507'
 ];
 
 const DRIVERS = [
@@ -232,6 +228,11 @@ function App() {
     if (currentDriver && (currentDriver !== 'Other' || customDriverName.trim())) {
       setIsLoggedIn(true);
       setIsBatchManager(isBatchMgr);
+      
+      // Batch managers/supervisors go directly to Daily Report
+      if (isBatchMgr) {
+        setTrackingMode('daily-report');
+      }
     } else {
       alert('Please select a driver name');
     }
@@ -264,6 +265,12 @@ function App() {
   const handleBack = () => {
     setAnimationClass('slide-in-left');
     if (trackingMode) {
+      // If batch manager, logout instead of going back to truck selection
+      if (isBatchManager) {
+        handleLogout();
+        return;
+      }
+      
       setTrackingMode(null);
       setIncompleteEntry(null);
       // Reset forms
@@ -978,7 +985,7 @@ function App() {
   // Render fuel tracking form
   if (trackingMode === 'fuel') {
     const displayName = currentDriver === 'Other' ? customDriverName : currentDriver;
-    const isSemi = selectedTruck === 'Semi';
+    const isSemi = selectedTruck === 'Green Semi';
     const costPerGallon = isSemi && fuelData.gallons && fuelData.cost
       ? (parseFloat(fuelData.cost) / parseFloat(fuelData.gallons)).toFixed(2)
       : 0;
