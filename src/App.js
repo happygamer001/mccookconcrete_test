@@ -697,8 +697,8 @@ function App() {
     );
   }
 
-  // Render truck selection screen
-  if (!selectedTruck) {
+  // Render truck selection screen (skip for batch managers)
+  if (!selectedTruck && !isBatchManager) {
     const displayName = currentDriver === 'Other' ? customDriverName : currentDriver;
     return (
       <div className="App">
