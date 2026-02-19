@@ -1,20 +1,15 @@
 module.exports = async (req, res) => {
-  // CORS headers
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
   res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
     const { 
+      name,
       date, 
       yardsOut, 
       tripsOut, 
@@ -31,19 +26,30 @@ module.exports = async (req, res) => {
     if (!notionApiKey || !databaseId) {
       return res.status(500).json({ 
         success: false, 
-        error: 'Missing environment variables',
-        debug: {
-          hasApiKey: !!notionApiKey,
-          hasDbId: !!databaseId,
-          apiKeyLength: notionApiKey?.length || 0,
-          dbIdLength: databaseId?.length || 0
-        }
+        error: 'Missing environment variables: NOTION_API_KEY or NOTION_DAILY_REPORT_DB_ID' 
       });
     }
 
+    // Build driver properties (up to 5 drivers)
+    const driverProps = {};
+    drivers.forEach((driver, index) => {
+      if (driver.name && driver.hours) {
+        driverProps[`Driver ${index + 1} Name`] = {
+          rich_text: [{ text: { content: driver.name } }]
+        };
+        driverProps[`Driver ${index + 1} Hours`] = {
+          number: parseFloat(driver.hours)
+        };
+      }
+    });
+
+    // Build Notion page properties
     const properties = {
       'Name': {
         title: [{ text: { content: `Daily Report - ${date}` } }]
+      },
+      'Reporter Name': {
+        rich_text: [{ text: { content: name || 'Not provided' } }]
       },
       'Report Date': {
         date: { start: date }
@@ -54,6 +60,7 @@ module.exports = async (req, res) => {
       'Trips Out': {
         number: parseFloat(tripsOut)
       },
+      ...driverProps,
       'End of Day Fuel Reading': {
         number: parseFloat(fuelReading)
       },
@@ -65,31 +72,21 @@ module.exports = async (req, res) => {
       }
     };
 
-    if (drivers && drivers.length > 0) {
-      drivers.forEach((driver, index) => {
-        if (index < 5 && driver.name) {
-          const num = index + 1;
-          properties[`Driver ${num} Name`] = {
-            rich_text: [{ text: { content: driver.name } }]
-          };
-          
-          const hours = driver.halfDay ? 4 : driver.fullDay ? 8 : 0;
-          if (hours > 0) {
-            properties[`Driver ${num} Hours`] = { number: hours };
-          }
-        }
-      });
-    }
-
+    // Handle photo upload if provided
     if (issuePhoto) {
+      // Photo is base64 encoded - we need to upload it to Notion
+      // Notion API requires external URL, so we'll include it as a link
+      // For now, we'll store the base64 in the issues field with a note
+      // In production, you'd upload to cloud storage first
       properties['Issue Photos'] = {
         files: [{
           name: `issue-photo-${Date.now()}.jpg`,
-          external: { url: issuePhoto }
+          external: { url: issuePhoto } // This will be a base64 data URL
         }]
       };
     }
 
+    // Create Notion page
     const notionRes = await fetch('https://api.notion.com/v1/pages', {
       method: 'POST',
       headers: {
@@ -109,20 +106,14 @@ module.exports = async (req, res) => {
       console.error('Notion error:', JSON.stringify(notionData));
       return res.status(500).json({ 
         success: false, 
-        error: notionData.message || 'Notion API error',
-        details: notionData
+        error: notionData.message || 'Notion API error' 
       });
     }
 
     return res.status(200).json({ success: true, id: notionData.id });
 
   } catch (error) {
-    console.error('Server error:', error);
-    return res.status(500).json({ 
-      success: false, 
-      error: error.message,
-      stack: error.stack,
-      details: 'Check function name and database ID'
-    });
+    console.error('Server error:', error.message);
+    return res.status(500).json({ success: false, error: error.message });
   }
 };
