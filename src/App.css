@@ -452,6 +452,33 @@ body {
   margin: 5px 0;
 }
 
+/* Cross State Line Modal */
+.cross-state-modal {
+  background: #e3f2fd;
+  border: 2px solid #2196f3;
+  border-radius: 15px;
+  padding: 25px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.2);
+}
+
+.cross-state-modal h3 {
+  color: #0d47a1;
+  font-size: 20px;
+  margin-bottom: 10px;
+  font-weight: 700;
+}
+
+.cross-state-modal p {
+  color: #0d47a1;
+  margin-bottom: 20px;
+  font-size: 16px;
+}
+
+.cross-state-modal .tracking-form {
+  margin-top: 0;
+}
+
 .info-message {
   background: #e3f2fd;
   border: 2px solid #2196f3;
