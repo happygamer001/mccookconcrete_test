@@ -597,13 +597,6 @@ function App() {
     }
   };
 
-  // Handle mode selection
-  const handleModeSelect = (mode) => {
-    setAnimationClass('slide-in-right');
-    setTrackingMode(mode);
-    setSubmitStatus(null);
-  };
-
   // Handle back button
   const handleBack = () => {
     setAnimationClass('slide-in-left');
