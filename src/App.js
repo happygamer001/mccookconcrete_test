@@ -113,6 +113,9 @@ function App() {
   // Online/offline state
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   
+  // Mileage alert state
+  const [mileageAlert, setMileageAlert] = useState(null);
+  
   // Week at a glance data
   const [weekData, setWeekData] = useState(null);
   const [loadingWeekData, setLoadingWeekData] = useState(false);
@@ -151,6 +154,41 @@ function App() {
       setCheckingIncomplete(false);
     }
   }, [currentDriver, customDriverName, selectedTruck]);
+
+  // Smart mileage validation
+  const validateMileage = (start, end, type = 'trip') => {
+    const startNum = parseFloat(start);
+    const endNum = parseFloat(end);
+    const diff = endNum - startNum;
+    
+    if (isNaN(startNum) || isNaN(endNum)) return null;
+    
+    // Negative mileage
+    if (diff < 0) {
+      return {
+        type: 'error',
+        message: '⚠️ Ending mileage is less than starting mileage. Please check your numbers.'
+      };
+    }
+    
+    // Single trip > 300 miles (unusual for local concrete delivery)
+    if (type === 'trip' && diff > 300) {
+      return {
+        type: 'warning',
+        message: `⚠️ This trip shows ${diff.toFixed(1)} miles. That's unusually high for a single shift. Double-check your numbers?`
+      };
+    }
+    
+    // Mileage jump > 1000 (possible truck swap or typo)
+    if (diff > 1000) {
+      return {
+        type: 'warning',
+        message: `⚠️ Odometer jumped ${diff.toFixed(1)} miles. Did you switch trucks or is this a typo?`
+      };
+    }
+    
+    return null;
+  };
 
   // Determine state from GPS coordinates
   const getStateFromCoordinates = (latitude, longitude) => {
@@ -357,6 +395,7 @@ function App() {
       
       setTrackingMode(null);
       setIncompleteEntry(null);
+      setMileageAlert(null); // Clear any mileage alerts
       // Reset forms
       setMileageData({
         date: new Date().toISOString().split('T')[0],
@@ -519,6 +558,7 @@ function App() {
           // Show completion screen
           setShowCompletionScreen(true);
           setIncompleteEntry(null);
+          setMileageAlert(null); // Clear any alerts
           
           // Reset form
           setMileageData({
@@ -557,6 +597,7 @@ function App() {
 
         if (response.ok) {
           setSubmitStatus({ type: 'success', message: '✅ Shift started! Come back later to enter your ending mileage.' });
+          setMileageAlert(null); // Clear any alerts
           // Reset form
           setMileageData({
             date: new Date().toISOString().split('T')[0],
@@ -1395,6 +1436,52 @@ function App() {
 
           {!showCrossStateModal && (
             <form onSubmit={submitMileageData} className="tracking-form">
+            
+            {/* Smart Mileage Validation Alert */}
+            {mileageAlert && (
+              <div className={`mileage-alert ${mileageAlert.type}`}>
+                {mileageAlert.message}
+                {mileageAlert.type === 'warning' && (
+                  <div style={{ marginTop: '10px' }}>
+                    <button 
+                      type="button"
+                      onClick={() => setMileageAlert(null)}
+                      style={{ 
+                        background: '#FF7E26', 
+                        color: 'white', 
+                        border: 'none', 
+                        padding: '8px 16px', 
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        marginRight: '10px',
+                        fontWeight: '600'
+                      }}
+                    >
+                      ✓ Numbers are Correct
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        setMileageData({...mileageData, mileageEnd: ''});
+                        setMileageAlert(null);
+                      }}
+                      style={{ 
+                        background: '#cbd5e0', 
+                        color: '#2d3748', 
+                        border: 'none', 
+                        padding: '8px 16px', 
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontWeight: '600'
+                      }}
+                    >
+                      Let Me Fix It
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+            
             <div className="form-group">
               <label htmlFor="mileage-date">Date:</label>
               <input
@@ -1450,7 +1537,17 @@ function App() {
                   inputMode="decimal"
                   step="0.1"
                   value={mileageData.mileageEnd}
-                  onChange={(e) => setMileageData({...mileageData, mileageEnd: e.target.value})}
+                  onChange={(e) => {
+                    setMileageData({...mileageData, mileageEnd: e.target.value});
+                    
+                    // Validate mileage as user types
+                    if (e.target.value && mileageData.mileageStart) {
+                      const alert = validateMileage(mileageData.mileageStart, e.target.value, 'trip');
+                      setMileageAlert(alert);
+                    } else {
+                      setMileageAlert(null);
+                    }
+                  }}
                   placeholder="Enter ending odometer reading"
                   required
                   className="text-input"
