@@ -156,6 +156,11 @@ function App() {
     // Issues tracking
     issues: ''
   });
+  
+  // Job site timing state
+  const [jobSiteArrivalTime, setJobSiteArrivalTime] = useState(null);
+  const [jobSiteDepartureTime, setJobSiteDepartureTime] = useState(null);
+  const [showJobSiteButtons, setShowJobSiteButtons] = useState(false);
 
   // Check for incomplete mileage entry - wrapped in useCallback
   const checkForIncompleteEntry = useCallback(async () => {
@@ -676,6 +681,36 @@ function App() {
   };
 
   // Submit mileage data to Notion
+  // Handle arriving on job site
+  const handleArrivedOnJobSite = () => {
+    const arrivalTime = new Date().toISOString();
+    setJobSiteArrivalTime(arrivalTime);
+    setSubmitStatus({ 
+      type: 'success', 
+      message: `⏱️ Job site timer started at ${new Date().toLocaleTimeString()}` 
+    });
+  };
+  
+  // Handle leaving job site
+  const handleLeavingJobSite = () => {
+    const departureTime = new Date().toISOString();
+    setJobSiteDepartureTime(departureTime);
+    
+    // Calculate job site duration
+    if (jobSiteArrivalTime) {
+      const arrival = new Date(jobSiteArrivalTime);
+      const departure = new Date(departureTime);
+      const durationMs = departure - arrival;
+      const hours = Math.floor(durationMs / (1000 * 60 * 60));
+      const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+      
+      setSubmitStatus({ 
+        type: 'success', 
+        message: `✅ Job site time: ${hours}h ${minutes}m` 
+      });
+    }
+  };
+
   const submitMileageData = async (e) => {
     e.preventDefault();
     
@@ -689,6 +724,21 @@ function App() {
         alert('Ending mileage must be greater than starting mileage');
         return;
       }
+      
+      // Calculate total delivery time
+      const startTime = new Date(incompleteEntry.timestamp);
+      const endTime = new Date();
+      const totalDeliveryTimeMs = endTime - startTime;
+      const totalDeliveryHours = (totalDeliveryTimeMs / (1000 * 60 * 60)).toFixed(2);
+      
+      // Calculate total job site time (if applicable)
+      let totalJobSiteHours = 0;
+      if (jobSiteArrivalTime && jobSiteDepartureTime) {
+        const arrivalTime = new Date(jobSiteArrivalTime);
+        const departureTime = new Date(jobSiteDepartureTime);
+        const jobSiteTimeMs = departureTime - arrivalTime;
+        totalJobSiteHours = (jobSiteTimeMs / (1000 * 60 * 60)).toFixed(2);
+      }
 
       try {
         // Update the existing Notion entry
@@ -701,7 +751,11 @@ function App() {
             action: 'complete',
             entryId: incompleteEntry.id,
             mileageEnd: parseFloat(mileageData.mileageEnd),
-            totalMiles: totalMiles
+            totalMiles: totalMiles,
+            jobSiteArrivalTime: jobSiteArrivalTime,
+            jobSiteDepartureTime: jobSiteDepartureTime,
+            totalDeliveryTime: parseFloat(totalDeliveryHours),
+            totalJobSiteTime: parseFloat(totalJobSiteHours)
           }),
         });
 
@@ -744,6 +798,9 @@ function App() {
           setShowCompletionScreen(true);
           setIncompleteEntry(null);
           setMileageAlert(null); // Clear any alerts
+          setShowJobSiteButtons(false); // Reset job site buttons
+          setJobSiteArrivalTime(null); // Reset arrival time
+          setJobSiteDepartureTime(null); // Reset departure time
           
           // Reset form
           setMileageData({
@@ -783,6 +840,7 @@ function App() {
         if (response.ok) {
           setSubmitStatus({ type: 'success', message: '✅ Shift started! Come back later to enter your ending mileage.' });
           setMileageAlert(null); // Clear any alerts
+          setShowJobSiteButtons(true); // Enable job site timing buttons
           // Reset form
           setMileageData({
             date: new Date().toISOString().split('T')[0],
@@ -2151,6 +2209,61 @@ function App() {
             >
               🚗 Cross State Line
             </button>
+          )}
+          
+          {/* Job Site Timing Buttons */}
+          {incompleteEntry && showJobSiteButtons && (
+            <div style={{ marginBottom: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {!jobSiteArrivalTime && (
+                <button
+                  type="button"
+                  onClick={handleArrivedOnJobSite}
+                  className="btn btn-info"
+                  style={{ width: '100%' }}
+                >
+                  🏗️ Arrived on Job Site
+                </button>
+              )}
+              
+              {jobSiteArrivalTime && !jobSiteDepartureTime && (
+                <div>
+                  <div style={{ 
+                    background: '#e6f7ff', 
+                    border: '2px solid #1890ff', 
+                    padding: '10px', 
+                    borderRadius: '8px',
+                    marginBottom: '10px',
+                    textAlign: 'center'
+                  }}>
+                    <span style={{ color: '#1890ff', fontWeight: '600' }}>
+                      ⏱️ On Job Site Since: {new Date(jobSiteArrivalTime).toLocaleTimeString()}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleLeavingJobSite}
+                    className="btn btn-warning"
+                    style={{ width: '100%' }}
+                  >
+                    🚪 Leaving Job Site
+                  </button>
+                </div>
+              )}
+              
+              {jobSiteArrivalTime && jobSiteDepartureTime && (
+                <div style={{ 
+                  background: '#f6ffed', 
+                  border: '2px solid #52c41a', 
+                  padding: '10px', 
+                  borderRadius: '8px',
+                  textAlign: 'center'
+                }}>
+                  <span style={{ color: '#52c41a', fontWeight: '600' }}>
+                    ✅ Job Site Time Recorded
+                  </span>
+                </div>
+              )}
+            </div>
           )}
 
           {showCrossStateModal && (
