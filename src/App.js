@@ -88,13 +88,13 @@ function App() {
 
   // Driver work status - initialized with known drivers + 2 blanks
   const [driverStatus, setDriverStatus] = useState({
-    'James': { halfDay: false, fullDay: false },
-    'Matt': { halfDay: false, fullDay: false },
-    'Calvin': { halfDay: false, fullDay: false },
-    'Jerron': { halfDay: false, fullDay: false },
-    'Nic': { halfDay: false, fullDay: false },
-    'Custom1': { name: '', halfDay: false, fullDay: false },
-    'Custom2': { name: '', halfDay: false, fullDay: false }
+    'James': { halfDay: false, fullDay: false, absent: false },
+    'Matt': { halfDay: false, fullDay: false, absent: false },
+    'Calvin': { halfDay: false, fullDay: false, absent: false },
+    'Jerron': { halfDay: false, fullDay: false, absent: false },
+    'Nic': { halfDay: false, fullDay: false, absent: false },
+    'Custom1': { name: '', halfDay: false, fullDay: false, absent: false },
+    'Custom2': { name: '', halfDay: false, fullDay: false, absent: false }
   });
   
   // Feedback state
@@ -133,6 +133,28 @@ function App() {
     supervisorName: '',
     reason: '',
     changes: {}
+  });
+  
+  // Pre-trip checklist state
+  const [showPreTripChecklist, setShowPreTripChecklist] = useState(false);
+  const [preTripChecklist, setPreTripChecklist] = useState({
+    tires: false,
+    oilLevel: false,
+    beltsHoses: false,
+    mirrors: false,
+    windshieldWipers: false,
+    lights: false,
+    headlights: false,
+    brakeLights: false,
+    turnSignals: false,
+    hazardLights: false,
+    safetyEquipment: false,
+    // Trailer items (conditional)
+    hasTrailer: false,
+    coupler: false,
+    safetyChains: false,
+    // Issues tracking
+    issues: ''
   });
 
   // Check for incomplete mileage entry - wrapped in useCallback
@@ -416,6 +438,163 @@ function App() {
   const handleTruckSelect = (truck) => {
     setAnimationClass('slide-in-right');
     setSelectedTruck(truck);
+    setShowPreTripChecklist(true); // Show pre-trip checklist first
+  };
+
+  // Handle mode selection
+  const handleModeSelect = (mode) => {
+    setAnimationClass('slide-in-right');
+    setTrackingMode(mode);
+    setSubmitStatus(null);
+  };
+  
+  // Handle pre-trip checklist submission
+  const submitPreTripChecklist = async () => {
+    const today = new Date().toISOString().split('T')[0];
+    const dayOfWeek = new Date().getDay(); // 0 = Sunday, 5 = Friday
+    const isFriday = dayOfWeek === 5;
+    
+    // Check if oil level is required (Fridays only)
+    if (isFriday && !preTripChecklist.oilLevel) {
+      alert('⚠️ Oil level check is required on Fridays!');
+      return;
+    }
+    
+    // Check all required items
+    const requiredItems = [
+      'tires', 'beltsHoses', 'mirrors', 'windshieldWipers', 
+      'lights', 'headlights', 'brakeLights', 'turnSignals', 
+      'hazardLights', 'safetyEquipment'
+    ];
+    
+    // Add oil level to required on Fridays
+    if (isFriday) {
+      requiredItems.push('oilLevel');
+    }
+    
+    // If has trailer, check trailer items
+    if (preTripChecklist.hasTrailer) {
+      requiredItems.push('coupler', 'safetyChains');
+    }
+    
+    const unchecked = requiredItems.filter(item => !preTripChecklist[item]);
+    
+    if (unchecked.length > 0) {
+      alert(`⚠️ Please complete all checklist items or note issues!`);
+      return;
+    }
+    
+    // Save to Notion
+    try {
+      const response = await fetch('https://mileage-tracker-final.vercel.app/api/submit-pretrip', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          driver: currentDriver,
+          truck: selectedTruck,
+          date: today,
+          checklist: preTripChecklist
+        }),
+      });
+      
+      if (response.ok) {
+        // Checklist complete, proceed to mode selection
+        setShowPreTripChecklist(false);
+        // Reset checklist for next time
+        setPreTripChecklist({
+          tires: false,
+          oilLevel: false,
+          beltsHoses: false,
+          mirrors: false,
+          windshieldWipers: false,
+          lights: false,
+          headlights: false,
+          brakeLights: false,
+          turnSignals: false,
+          hazardLights: false,
+          safetyEquipment: false,
+          hasTrailer: false,
+          coupler: false,
+          safetyChains: false,
+          issues: ''
+        });
+      } else {
+        throw new Error('Failed to submit checklist');
+      }
+    } catch (error) {
+      console.error('Error submitting pre-trip checklist:', error);
+      alert('Failed to submit checklist. Please try again.');
+    }
+  };
+  
+  // Handle "All Good - No Issues" bypass
+  const handleAllGood = async () => {
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Mark all items as checked
+    const allChecked = {
+      tires: true,
+      oilLevel: true,
+      beltsHoses: true,
+      mirrors: true,
+      windshieldWipers: true,
+      lights: true,
+      headlights: true,
+      brakeLights: true,
+      turnSignals: true,
+      hazardLights: true,
+      safetyEquipment: true,
+      hasTrailer: preTripChecklist.hasTrailer,
+      coupler: preTripChecklist.hasTrailer,
+      safetyChains: preTripChecklist.hasTrailer,
+      issues: 'No issues - all good'
+    };
+    
+    // Save to Notion
+    try {
+      const response = await fetch('https://mileage-tracker-final.vercel.app/api/submit-pretrip', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          driver: currentDriver,
+          truck: selectedTruck,
+          date: today,
+          checklist: allChecked
+        }),
+      });
+      
+      if (response.ok) {
+        // Checklist bypassed, proceed to mode selection
+        setShowPreTripChecklist(false);
+        // Reset checklist
+        setPreTripChecklist({
+          tires: false,
+          oilLevel: false,
+          beltsHoses: false,
+          mirrors: false,
+          windshieldWipers: false,
+          lights: false,
+          headlights: false,
+          brakeLights: false,
+          turnSignals: false,
+          hazardLights: false,
+          safetyEquipment: false,
+          hasTrailer: false,
+          coupler: false,
+          safetyChains: false,
+          issues: ''
+        });
+      } else {
+        throw new Error('Failed to submit checklist');
+      }
+    } catch (error) {
+      console.error('Error submitting pre-trip checklist:', error);
+      alert('Failed to submit. Please try again.');
+    }
   };
 
   // Handle mode selection
@@ -1580,6 +1759,213 @@ function App() {
       </div>
     );
   }
+  
+  // Render pre-trip checklist (before mode selection)
+  if (showPreTripChecklist) {
+    const displayName = currentDriver === 'Other' ? customDriverName : currentDriver;
+    const today = new Date();
+    const dayOfWeek = today.getDay();
+    const isFriday = dayOfWeek === 5;
+    
+    return (
+      <div className="App">
+        <div className={`container ${animationClass}`}>
+          <div className="header">
+            <button onClick={() => {
+              setShowPreTripChecklist(false);
+              setSelectedTruck('');
+            }} className="btn btn-back">
+              ← Back
+            </button>
+            <h1>Pre-Trip Inspection</h1>
+            <p className="user-info">Driver: {displayName} | Truck: {selectedTruck}</p>
+          </div>
+
+          <div className="pretrip-container">
+            <div className="pretrip-header">
+              <h2>🔍 Daily Safety Checklist</h2>
+              <p>Complete inspection before starting your shift</p>
+            </div>
+
+            <div className="pretrip-checklist">
+              <div className="checklist-section">
+                <h3>Vehicle Inspection</h3>
+                
+                <label className="pretrip-item">
+                  <input
+                    type="checkbox"
+                    checked={preTripChecklist.tires}
+                    onChange={(e) => setPreTripChecklist({...preTripChecklist, tires: e.target.checked})}
+                  />
+                  <span>Tires (pressure, tread, damage)</span>
+                </label>
+
+                <label className={`pretrip-item ${isFriday ? 'required-friday' : ''}`}>
+                  <input
+                    type="checkbox"
+                    checked={preTripChecklist.oilLevel}
+                    onChange={(e) => setPreTripChecklist({...preTripChecklist, oilLevel: e.target.checked})}
+                  />
+                  <span>Oil Level {isFriday && <strong style={{color: '#FF7E26'}}>(Required on Fridays)</strong>}</span>
+                </label>
+
+                <label className="pretrip-item">
+                  <input
+                    type="checkbox"
+                    checked={preTripChecklist.beltsHoses}
+                    onChange={(e) => setPreTripChecklist({...preTripChecklist, beltsHoses: e.target.checked})}
+                  />
+                  <span>Belts & Hoses</span>
+                </label>
+
+                <label className="pretrip-item">
+                  <input
+                    type="checkbox"
+                    checked={preTripChecklist.mirrors}
+                    onChange={(e) => setPreTripChecklist({...preTripChecklist, mirrors: e.target.checked})}
+                  />
+                  <span>Mirrors (clean, adjusted)</span>
+                </label>
+
+                <label className="pretrip-item">
+                  <input
+                    type="checkbox"
+                    checked={preTripChecklist.windshieldWipers}
+                    onChange={(e) => setPreTripChecklist({...preTripChecklist, windshieldWipers: e.target.checked})}
+                  />
+                  <span>Windshield Wipers</span>
+                </label>
+              </div>
+
+              <div className="checklist-section">
+                <h3>Lights & Signals</h3>
+
+                <label className="pretrip-item">
+                  <input
+                    type="checkbox"
+                    checked={preTripChecklist.lights}
+                    onChange={(e) => setPreTripChecklist({...preTripChecklist, lights: e.target.checked})}
+                  />
+                  <span>Running Lights</span>
+                </label>
+
+                <label className="pretrip-item">
+                  <input
+                    type="checkbox"
+                    checked={preTripChecklist.headlights}
+                    onChange={(e) => setPreTripChecklist({...preTripChecklist, headlights: e.target.checked})}
+                  />
+                  <span>Headlights (high & low beam)</span>
+                </label>
+
+                <label className="pretrip-item">
+                  <input
+                    type="checkbox"
+                    checked={preTripChecklist.brakeLights}
+                    onChange={(e) => setPreTripChecklist({...preTripChecklist, brakeLights: e.target.checked})}
+                  />
+                  <span>Brake Lights</span>
+                </label>
+
+                <label className="pretrip-item">
+                  <input
+                    type="checkbox"
+                    checked={preTripChecklist.turnSignals}
+                    onChange={(e) => setPreTripChecklist({...preTripChecklist, turnSignals: e.target.checked})}
+                  />
+                  <span>Turn Signals</span>
+                </label>
+
+                <label className="pretrip-item">
+                  <input
+                    type="checkbox"
+                    checked={preTripChecklist.hazardLights}
+                    onChange={(e) => setPreTripChecklist({...preTripChecklist, hazardLights: e.target.checked})}
+                  />
+                  <span>Hazard Lights</span>
+                </label>
+              </div>
+
+              <div className="checklist-section">
+                <h3>Safety Equipment</h3>
+
+                <label className="pretrip-item">
+                  <input
+                    type="checkbox"
+                    checked={preTripChecklist.safetyEquipment}
+                    onChange={(e) => setPreTripChecklist({...preTripChecklist, safetyEquipment: e.target.checked})}
+                  />
+                  <span>Fire Extinguisher, Flares, Cones</span>
+                </label>
+              </div>
+
+              <div className="checklist-section">
+                <h3>Trailer (if attached)</h3>
+
+                <label className="pretrip-item trailer-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={preTripChecklist.hasTrailer}
+                    onChange={(e) => setPreTripChecklist({...preTripChecklist, hasTrailer: e.target.checked})}
+                  />
+                  <span><strong>Truck has trailer attached</strong></span>
+                </label>
+
+                {preTripChecklist.hasTrailer && (
+                  <>
+                    <label className="pretrip-item trailer-item">
+                      <input
+                        type="checkbox"
+                        checked={preTripChecklist.coupler}
+                        onChange={(e) => setPreTripChecklist({...preTripChecklist, coupler: e.target.checked})}
+                      />
+                      <span>Coupler (secure, locked)</span>
+                    </label>
+
+                    <label className="pretrip-item trailer-item">
+                      <input
+                        type="checkbox"
+                        checked={preTripChecklist.safetyChains}
+                        onChange={(e) => setPreTripChecklist({...preTripChecklist, safetyChains: e.target.checked})}
+                      />
+                      <span>Safety Chains (attached, not dragging)</span>
+                    </label>
+                  </>
+                )}
+              </div>
+
+              <div className="checklist-section">
+                <h3>Issues or Notes (Optional)</h3>
+                <textarea
+                  value={preTripChecklist.issues}
+                  onChange={(e) => setPreTripChecklist({...preTripChecklist, issues: e.target.value})}
+                  placeholder="Note any issues found during inspection..."
+                  rows="3"
+                  className="textarea-input"
+                  style={{width: '100%', marginTop: '10px'}}
+                />
+              </div>
+            </div>
+
+            <div className="pretrip-buttons">
+              <button 
+                onClick={handleAllGood}
+                className="btn btn-success btn-all-good"
+              >
+                ✅ All Good - No Issues
+              </button>
+              <button 
+                onClick={submitPreTripChecklist}
+                className="btn btn-primary"
+              >
+                Complete Inspection
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Render tracking mode selection
   if (!trackingMode) {
@@ -2234,6 +2620,14 @@ function App() {
                       />
                       <span>Full Day</span>
                     </label>
+                    <label className="checkbox-container">
+                      <input
+                        type="checkbox"
+                        checked={driverStatus[driver].absent}
+                        onChange={() => handleDriverCheckbox(driver, 'absent')}
+                      />
+                      <span>Absent</span>
+                    </label>
                   </div>
                 </div>
               ))}
@@ -2265,6 +2659,15 @@ function App() {
                         disabled={!driverStatus[key].name}
                       />
                       <span>Full Day</span>
+                    </label>
+                    <label className="checkbox-container">
+                      <input
+                        type="checkbox"
+                        checked={driverStatus[key].absent}
+                        onChange={() => handleDriverCheckbox(key, 'absent')}
+                        disabled={!driverStatus[key].name}
+                      />
+                      <span>Absent</span>
                     </label>
                   </div>
                 </div>
