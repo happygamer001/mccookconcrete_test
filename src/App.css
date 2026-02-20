@@ -1970,3 +1970,58 @@ body.dark-mode .trailer-item {
     font-size: 14px;
   }
 }
+
+/* Job Site Timing Buttons */
+.btn-info {
+  background: #1890ff;
+  color: white;
+  border: none;
+  padding: 14px 20px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.3);
+}
+
+.btn-info:hover {
+  background: #096dd9;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.4);
+}
+
+.btn-warning {
+  background: #fa8c16;
+  color: white;
+  border: none;
+  padding: 14px 20px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(250, 140, 22, 0.3);
+}
+
+.btn-warning:hover {
+  background: #d46b08;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(250, 140, 22, 0.4);
+}
+
+body.dark-mode .btn-info {
+  background: #177ddc;
+}
+
+body.dark-mode .btn-info:hover {
+  background: #0958d9;
+}
+
+body.dark-mode .btn-warning {
+  background: #d46b08;
+}
+
+body.dark-mode .btn-warning:hover {
+  background: #ad4e00;
+}
