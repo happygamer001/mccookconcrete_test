@@ -14,7 +14,10 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const { action, driver, truck, date, state, mileageStart, mileageEnd, totalMiles, entryId } = req.body;
+    const { 
+      action, driver, truck, date, state, mileageStart, mileageEnd, totalMiles, entryId,
+      jobSiteArrivalTime, jobSiteDepartureTime, totalDeliveryTime, totalJobSiteTime
+    } = req.body;
 
     const notionApiKey = process.env.NOTION_API_KEY;
     const databaseId = process.env.NOTION_MILEAGE_DB_ID;
@@ -29,6 +32,34 @@ module.exports = async (req, res) => {
         return res.status(400).json({ success: false, error: 'Missing entryId or mileageEnd for complete action' });
       }
 
+      // Build properties object
+      const properties = {
+        'Mileage End': { number: mileageEnd },
+        'Status': { status: { name: 'Done' } }
+      };
+      
+      // Add job site times if provided
+      if (jobSiteArrivalTime) {
+        properties['Job Site Arrival'] = { 
+          rich_text: [{ text: { content: jobSiteArrivalTime } }] 
+        };
+      }
+      
+      if (jobSiteDepartureTime) {
+        properties['Job Site Departure'] = { 
+          rich_text: [{ text: { content: jobSiteDepartureTime } }] 
+        };
+      }
+      
+      // Add calculated times if provided
+      if (totalDeliveryTime !== undefined && totalDeliveryTime !== null) {
+        properties['Total Delivery Time (hrs)'] = { number: totalDeliveryTime };
+      }
+      
+      if (totalJobSiteTime !== undefined && totalJobSiteTime !== null) {
+        properties['Total Job Site Time (hrs)'] = { number: totalJobSiteTime };
+      }
+
       const notionRes = await fetch(`https://api.notion.com/v1/pages/${entryId}`, {
         method: 'PATCH',
         headers: {
@@ -36,12 +67,7 @@ module.exports = async (req, res) => {
           'Content-Type': 'application/json',
           'Notion-Version': '2022-06-28'
         },
-        body: JSON.stringify({
-          properties: {
-            'Mileage End': { number: mileageEnd },
-            'Status': { status: { name: 'Done' } }
-          }
-        })
+        body: JSON.stringify({ properties })
       });
 
       const notionData = await notionRes.json();
