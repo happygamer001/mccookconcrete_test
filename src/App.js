@@ -451,38 +451,9 @@ function App() {
   // Handle pre-trip checklist submission
   const submitPreTripChecklist = async () => {
     const today = new Date().toISOString().split('T')[0];
-    const dayOfWeek = new Date().getDay(); // 0 = Sunday, 5 = Friday
-    const isFriday = dayOfWeek === 5;
     
-    // Check if oil level is required (Fridays only)
-    if (isFriday && !preTripChecklist.oilLevel) {
-      alert('⚠️ Oil level check is required on Fridays!');
-      return;
-    }
-    
-    // Check all required items
-    const requiredItems = [
-      'tires', 'beltsHoses', 'mirrors', 'windshieldWipers', 
-      'lights', 'headlights', 'brakeLights', 'turnSignals', 
-      'hazardLights', 'safetyEquipment'
-    ];
-    
-    // Add oil level to required on Fridays
-    if (isFriday) {
-      requiredItems.push('oilLevel');
-    }
-    
-    // If has trailer, check trailer items
-    if (preTripChecklist.hasTrailer) {
-      requiredItems.push('coupler', 'safetyChains');
-    }
-    
-    const unchecked = requiredItems.filter(item => !preTripChecklist[item]);
-    
-    if (unchecked.length > 0) {
-      alert(`⚠️ Please complete all checklist items or note issues!`);
-      return;
-    }
+    // No validation needed - unchecked = good, checked = issue
+    // Drivers only check boxes when there are problems
     
     // Save to Notion
     try {
@@ -533,22 +504,22 @@ function App() {
   const handleAllGood = async () => {
     const today = new Date().toISOString().split('T')[0];
     
-    // Mark all items as checked
-    const allChecked = {
-      tires: true,
-      oilLevel: true,
-      beltsHoses: true,
-      mirrors: true,
-      windshieldWipers: true,
-      lights: true,
-      headlights: true,
-      brakeLights: true,
-      turnSignals: true,
-      hazardLights: true,
-      safetyEquipment: true,
+    // All boxes UNCHECKED = everything is good (matches paper form)
+    const allGood = {
+      tires: false,
+      oilLevel: false,
+      beltsHoses: false,
+      mirrors: false,
+      windshieldWipers: false,
+      lights: false,
+      headlights: false,
+      brakeLights: false,
+      turnSignals: false,
+      hazardLights: false,
+      safetyEquipment: false,
       hasTrailer: preTripChecklist.hasTrailer,
-      coupler: preTripChecklist.hasTrailer,
-      safetyChains: preTripChecklist.hasTrailer,
+      coupler: false,
+      safetyChains: false,
       issues: 'No issues - all good'
     };
     
@@ -563,7 +534,7 @@ function App() {
           driver: currentDriver,
           truck: selectedTruck,
           date: today,
-          checklist: allChecked
+          checklist: allGood
         }),
       });
       
@@ -1777,12 +1748,13 @@ function App() {
           <div className="pretrip-container">
             <div className="pretrip-header">
               <h2>🔍 Daily Safety Checklist</h2>
-              <p>Complete inspection before starting your shift</p>
+              <p style={{ marginBottom: '10px' }}>Check any boxes below if you find issues</p>
+              <p style={{ color: '#FF7E26', fontWeight: '600' }}>✅ If everything looks good, just click "All Good - No Issues"</p>
             </div>
 
             <div className="pretrip-checklist">
               <div className="checklist-section">
-                <h3>Vehicle Inspection</h3>
+                <h3>Vehicle Inspection (Check box if issue found)</h3>
                 
                 <label className="pretrip-item">
                   <input
@@ -1799,7 +1771,7 @@ function App() {
                     checked={preTripChecklist.oilLevel}
                     onChange={(e) => setPreTripChecklist({...preTripChecklist, oilLevel: e.target.checked})}
                   />
-                  <span>Oil Level {isFriday && <strong style={{color: '#FF7E26'}}>(Required on Fridays)</strong>}</span>
+                  <span>Oil Level {isFriday && <strong style={{color: '#FF7E26'}}>(Check on Fridays)</strong>}</span>
                 </label>
 
                 <label className="pretrip-item">
@@ -1831,7 +1803,7 @@ function App() {
               </div>
 
               <div className="checklist-section">
-                <h3>Lights & Signals</h3>
+                <h3>Lights & Signals (Check box if issue found)</h3>
 
                 <label className="pretrip-item">
                   <input
@@ -1880,7 +1852,7 @@ function App() {
               </div>
 
               <div className="checklist-section">
-                <h3>Safety Equipment</h3>
+                <h3>Safety Equipment (Check box if issue found)</h3>
 
                 <label className="pretrip-item">
                   <input
@@ -1951,7 +1923,7 @@ function App() {
                 onClick={submitPreTripChecklist}
                 className="btn btn-primary"
               >
-                Complete Inspection
+                Submit (Issues Noted)
               </button>
             </div>
           </div>
