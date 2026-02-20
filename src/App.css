@@ -1778,3 +1778,195 @@ body.dark-mode .override-required-section {
     flex-direction: column;
   }
 }
+
+/* Pre-Trip Checklist Styles */
+.pretrip-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.pretrip-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.pretrip-header h2 {
+  color: #2d3748;
+  margin-bottom: 10px;
+}
+
+body.dark-mode .pretrip-header h2 {
+  color: #e2e8f0;
+}
+
+.pretrip-header p {
+  color: #718096;
+  font-size: 16px;
+}
+
+body.dark-mode .pretrip-header p {
+  color: #cbd5e0;
+}
+
+.pretrip-checklist {
+  background: #f7fafc;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+body.dark-mode .pretrip-checklist {
+  background: #374151;
+}
+
+.checklist-section {
+  margin-bottom: 30px;
+}
+
+.checklist-section h3 {
+  color: #2d3748;
+  font-size: 18px;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+body.dark-mode .checklist-section h3 {
+  color: #e2e8f0;
+  border-bottom-color: #4a5568;
+}
+
+.pretrip-item {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  margin-bottom: 8px;
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pretrip-item:hover {
+  border-color: #FF7E26;
+  background: #fff5f0;
+}
+
+body.dark-mode .pretrip-item {
+  background: #2d3748;
+  border-color: #4a5568;
+}
+
+body.dark-mode .pretrip-item:hover {
+  border-color: #FF7E26;
+  background: #4a3f35;
+}
+
+.pretrip-item input[type="checkbox"] {
+  width: 24px;
+  height: 24px;
+  margin-right: 12px;
+  cursor: pointer;
+  accent-color: #FF7E26;
+}
+
+.pretrip-item span {
+  color: #2d3748;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+body.dark-mode .pretrip-item span {
+  color: #e2e8f0;
+}
+
+.pretrip-item input[type="checkbox"]:checked + span {
+  color: #48bb78;
+  font-weight: 600;
+}
+
+body.dark-mode .pretrip-item input[type="checkbox"]:checked + span {
+  color: #68d391;
+}
+
+.required-friday {
+  border-color: #FF7E26 !important;
+  background: #fff5f0 !important;
+}
+
+body.dark-mode .required-friday {
+  background: #4a3f35 !important;
+}
+
+.trailer-checkbox {
+  background: #edf2f7 !important;
+  border-color: #cbd5e0 !important;
+}
+
+body.dark-mode .trailer-checkbox {
+  background: #4a5568 !important;
+  border-color: #718096 !important;
+}
+
+.trailer-item {
+  margin-left: 30px;
+  background: #f0f7ff !important;
+  border-left: 4px solid #3182ce !important;
+}
+
+body.dark-mode .trailer-item {
+  background: #2c5282 !important;
+}
+
+.pretrip-buttons {
+  display: flex;
+  gap: 15px;
+  margin-top: 30px;
+}
+
+.pretrip-buttons .btn {
+  flex: 1;
+  padding: 16px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.btn-all-good {
+  background: #48bb78;
+  color: white;
+  border: none;
+  font-size: 18px;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+}
+
+.btn-all-good:hover {
+  background: #38a169;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(72, 187, 120, 0.4);
+}
+
+.btn-success {
+  background: #48bb78;
+}
+
+.btn-success:hover {
+  background: #38a169;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .pretrip-buttons {
+    flex-direction: column;
+  }
+  
+  .pretrip-item {
+    padding: 10px;
+  }
+  
+  .pretrip-item span {
+    font-size: 14px;
+  }
+}
