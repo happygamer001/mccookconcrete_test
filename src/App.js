@@ -123,6 +123,17 @@ function App() {
   // Fleet status data
   const [fleetStatus, setFleetStatus] = useState(null);
   const [loadingFleetStatus, setLoadingFleetStatus] = useState(false);
+  
+  // Edit entries state
+  const [recentEntries, setRecentEntries] = useState(null);
+  const [loadingEntries, setLoadingEntries] = useState(false);
+  const [editingEntry, setEditingEntry] = useState(null);
+  const [showOverrideModal, setShowOverrideModal] = useState(false);
+  const [overrideData, setOverrideData] = useState({
+    supervisorName: '',
+    reason: '',
+    changes: {}
+  });
 
   // Check for incomplete mileage entry - wrapped in useCallback
   const checkForIncompleteEntry = useCallback(async () => {
@@ -340,6 +351,37 @@ function App() {
         }
       };
       fetchFleetStatus();
+    }
+  }, [trackingMode]);
+  
+  // Fetch recent entries when entering edit-entries mode
+  useEffect(() => {
+    if (trackingMode === 'edit-entries') {
+      const fetchRecentEntries = async () => {
+        setLoadingEntries(true);
+        try {
+          // Fetch both mileage and fuel entries
+          const [mileageRes, fuelRes] = await Promise.all([
+            fetch('https://mileage-tracker-final.vercel.app/api/get-recent-entries?type=mileage&days=7'),
+            fetch('https://mileage-tracker-final.vercel.app/api/get-recent-entries?type=fuel&days=7')
+          ]);
+          
+          const mileageData = await mileageRes.json();
+          const fuelData = await fuelRes.json();
+          
+          if (mileageData.success && fuelData.success) {
+            setRecentEntries({
+              mileage: mileageData.entries || [],
+              fuel: fuelData.entries || []
+            });
+          }
+        } catch (error) {
+          console.error('Error fetching recent entries:', error);
+        } finally {
+          setLoadingEntries(false);
+        }
+      };
+      fetchRecentEntries();
     }
   }, [trackingMode]);
 
@@ -890,6 +932,18 @@ function App() {
               <div className="option-title">Fleet Status</div>
               <div className="option-description">See who has which truck right now</div>
             </button>
+            
+            <button
+              onClick={() => {
+                setAnimationClass('slide-in-right');
+                setTrackingMode('edit-entries');
+              }}
+              className="supervisor-option-card"
+            >
+              <div className="option-icon">✏️</div>
+              <div className="option-title">Edit Entries</div>
+              <div className="option-description">View and correct driver submissions</div>
+            </button>
           </div>
           
           <div className="dark-mode-toggle">
@@ -1111,6 +1165,386 @@ function App() {
               </>
             )}
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Edit Entries View (Supervisor only)
+  if (trackingMode === 'edit-entries') {
+    const handleEditEntry = (entry, type) => {
+      setEditingEntry({ ...entry, type });
+      setShowOverrideModal(true);
+    };
+
+    const handleSaveOverride = async () => {
+      if (!overrideData.supervisorName.trim() || !overrideData.reason.trim()) {
+        alert('Supervisor name and reason are required!');
+        return;
+      }
+
+      if (Object.keys(overrideData.changes).length === 0) {
+        alert('No changes to save!');
+        return;
+      }
+
+      try {
+        const response = await fetch('https://mileage-tracker-final.vercel.app/api/supervisor-override', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            entryId: editingEntry.id,
+            entryType: editingEntry.type,
+            changes: overrideData.changes,
+            supervisorName: overrideData.supervisorName,
+            reason: overrideData.reason,
+            originalDriver: editingEntry.driver,
+            originalTruck: editingEntry.truck,
+            originalDate: editingEntry.date
+          }),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          alert(`✅ Entry updated! ${data.changesCount} change(s) logged.`);
+          setShowOverrideModal(false);
+          setEditingEntry(null);
+          setOverrideData({ supervisorName: '', reason: '', changes: {} });
+          // Refresh entries
+          setTrackingMode('supervisor-menu');
+          setTimeout(() => setTrackingMode('edit-entries'), 100);
+        } else {
+          throw new Error(data.error || 'Failed to update');
+        }
+      } catch (error) {
+        console.error('Error saving override:', error);
+        alert('❌ Failed to save changes. Please try again.');
+      }
+    };
+
+    return (
+      <div className="App">
+        <div className={`container ${animationClass}`}>
+          <div className="header">
+            <button onClick={() => {
+              setAnimationClass('slide-in-left');
+              setTrackingMode('supervisor-menu');
+            }} className="btn btn-back">
+              ← Back
+            </button>
+            <button onClick={handleLogout} className="btn btn-secondary">
+              Logout
+            </button>
+          </div>
+
+          <div className="week-container">
+            <div className="week-header">
+              <h2>✏️ Edit Entries</h2>
+              <p className="week-date-range">Last 7 days</p>
+            </div>
+
+            {loadingEntries && (
+              <div className="info-message">
+                <span className="loading-spinner"></span>
+                Loading entries...
+              </div>
+            )}
+
+            {!loadingEntries && recentEntries && (
+              <>
+                {/* Mileage Entries */}
+                <h3 style={{ marginTop: '30px', marginBottom: '15px', color: '#2d3748' }}>📍 Mileage Entries</h3>
+                {recentEntries.mileage.length === 0 ? (
+                  <p style={{ color: '#718096', textAlign: 'center', padding: '20px' }}>No mileage entries in the last 7 days.</p>
+                ) : (
+                  <div className="entries-list">
+                    {recentEntries.mileage.map((entry) => (
+                      <div key={entry.id} className="entry-card">
+                        <div className="entry-header">
+                          <span className="entry-driver">{entry.driver}</span>
+                          <span className="entry-truck">🚛 {entry.truck}</span>
+                        </div>
+                        <div className="entry-details">
+                          <div className="entry-row">
+                            <span>Date:</span>
+                            <span>{new Date(entry.date).toLocaleDateString()}</span>
+                          </div>
+                          <div className="entry-row">
+                            <span>State:</span>
+                            <span>{entry.state}</span>
+                          </div>
+                          <div className="entry-row">
+                            <span>Start:</span>
+                            <span>{entry.mileageStart.toFixed(1)}</span>
+                          </div>
+                          <div className="entry-row">
+                            <span>End:</span>
+                            <span>{entry.mileageEnd > 0 ? entry.mileageEnd.toFixed(1) : 'Incomplete'}</span>
+                          </div>
+                          <div className="entry-row">
+                            <span>Total:</span>
+                            <span className="entry-highlight">{entry.totalMiles.toFixed(1)} mi</span>
+                          </div>
+                        </div>
+                        <button 
+                          onClick={() => handleEditEntry(entry, 'mileage')}
+                          className="btn-edit-entry"
+                        >
+                          ✏️ Edit
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Fuel Entries */}
+                <h3 style={{ marginTop: '30px', marginBottom: '15px', color: '#2d3748' }}>⛽ Fuel Entries</h3>
+                {recentEntries.fuel.length === 0 ? (
+                  <p style={{ color: '#718096', textAlign: 'center', padding: '20px' }}>No fuel entries in the last 7 days.</p>
+                ) : (
+                  <div className="entries-list">
+                    {recentEntries.fuel.map((entry) => (
+                      <div key={entry.id} className="entry-card">
+                        <div className="entry-header">
+                          <span className="entry-driver">{entry.driver}</span>
+                          <span className="entry-truck">🚛 {entry.truck}</span>
+                        </div>
+                        <div className="entry-details">
+                          <div className="entry-row">
+                            <span>Date:</span>
+                            <span>{new Date(entry.date).toLocaleDateString()}</span>
+                          </div>
+                          <div className="entry-row">
+                            <span>State:</span>
+                            <span>{entry.state}</span>
+                          </div>
+                          <div className="entry-row">
+                            <span>Gallons:</span>
+                            <span>{entry.gallons.toFixed(2)}</span>
+                          </div>
+                          <div className="entry-row">
+                            <span>Cost:</span>
+                            <span className="entry-highlight">${entry.cost.toFixed(2)}</span>
+                          </div>
+                          {entry.location && (
+                            <div className="entry-row">
+                              <span>Location:</span>
+                              <span>{entry.location}</span>
+                            </div>
+                          )}
+                        </div>
+                        <button 
+                          onClick={() => handleEditEntry(entry, 'fuel')}
+                          className="btn-edit-entry"
+                        >
+                          ✏️ Edit
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+
+          {/* Override Modal */}
+          {showOverrideModal && editingEntry && (
+            <div className="modal-overlay">
+              <div className="modal-content override-modal">
+                <h2>🔐 Supervisor Override</h2>
+                <p style={{ color: '#718096', marginBottom: '20px' }}>
+                  Editing {editingEntry.type} entry for {editingEntry.driver} ({editingEntry.truck})
+                </p>
+
+                {/* Edit Fields */}
+                <div className="override-edit-section">
+                  <h3>Edit Values:</h3>
+                  
+                  {editingEntry.type === 'mileage' ? (
+                    <>
+                      <div className="form-group">
+                        <label>Mileage Start:</label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          defaultValue={editingEntry.mileageStart}
+                          onChange={(e) => {
+                            if (parseFloat(e.target.value) !== editingEntry.mileageStart) {
+                              setOverrideData({
+                                ...overrideData,
+                                changes: {
+                                  ...overrideData.changes,
+                                  'Mileage Start': {
+                                    oldValue: editingEntry.mileageStart,
+                                    newValue: e.target.value,
+                                    propertyType: 'number'
+                                  }
+                                }
+                              });
+                            }
+                          }}
+                          className="text-input"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Mileage End:</label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          defaultValue={editingEntry.mileageEnd}
+                          onChange={(e) => {
+                            if (parseFloat(e.target.value) !== editingEntry.mileageEnd) {
+                              setOverrideData({
+                                ...overrideData,
+                                changes: {
+                                  ...overrideData.changes,
+                                  'Mileage End': {
+                                    oldValue: editingEntry.mileageEnd,
+                                    newValue: e.target.value,
+                                    propertyType: 'number'
+                                  }
+                                }
+                              });
+                            }
+                          }}
+                          className="text-input"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>State:</label>
+                        <select
+                          defaultValue={editingEntry.state}
+                          onChange={(e) => {
+                            if (e.target.value !== editingEntry.state) {
+                              setOverrideData({
+                                ...overrideData,
+                                changes: {
+                                  ...overrideData.changes,
+                                  'State': {
+                                    oldValue: editingEntry.state,
+                                    newValue: e.target.value,
+                                    propertyType: 'select'
+                                  }
+                                }
+                              });
+                            }
+                          }}
+                          className="select-input"
+                        >
+                          {STATES.map(state => (
+                            <option key={state} value={state}>{state}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="form-group">
+                        <label>Gallons:</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          defaultValue={editingEntry.gallons}
+                          onChange={(e) => {
+                            if (parseFloat(e.target.value) !== editingEntry.gallons) {
+                              setOverrideData({
+                                ...overrideData,
+                                changes: {
+                                  ...overrideData.changes,
+                                  'Gallons': {
+                                    oldValue: editingEntry.gallons,
+                                    newValue: e.target.value,
+                                    propertyType: 'number'
+                                  }
+                                }
+                              });
+                            }
+                          }}
+                          className="text-input"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Total Cost:</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          defaultValue={editingEntry.cost}
+                          onChange={(e) => {
+                            if (parseFloat(e.target.value) !== editingEntry.cost) {
+                              setOverrideData({
+                                ...overrideData,
+                                changes: {
+                                  ...overrideData.changes,
+                                  'Total Cost': {
+                                    oldValue: editingEntry.cost,
+                                    newValue: e.target.value,
+                                    propertyType: 'number'
+                                  }
+                                }
+                              });
+                            }
+                          }}
+                          className="text-input"
+                        />
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Required: Supervisor Name & Reason */}
+                <div className="override-required-section">
+                  <h3 style={{ color: '#e53e3e', marginBottom: '10px' }}>⚠️ Required Information:</h3>
+                  
+                  <div className="form-group">
+                    <label>Your Name: *</label>
+                    <input
+                      type="text"
+                      value={overrideData.supervisorName}
+                      onChange={(e) => setOverrideData({...overrideData, supervisorName: e.target.value})}
+                      placeholder="Enter your full name"
+                      required
+                      className="text-input"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Reason for Override: *</label>
+                    <textarea
+                      value={overrideData.reason}
+                      onChange={(e) => setOverrideData({...overrideData, reason: e.target.value})}
+                      placeholder="Explain why you're making this change..."
+                      required
+                      rows="3"
+                      className="textarea-input"
+                    />
+                  </div>
+                </div>
+
+                {/* Buttons */}
+                <div className="modal-buttons">
+                  <button 
+                    onClick={handleSaveOverride}
+                    className="btn btn-primary"
+                  >
+                    💾 Save Changes
+                  </button>
+                  <button 
+                    onClick={() => {
+                      setShowOverrideModal(false);
+                      setEditingEntry(null);
+                      setOverrideData({ supervisorName: '', reason: '', changes: {} });
+                    }}
+                    className="btn btn-secondary"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
