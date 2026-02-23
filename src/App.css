@@ -2121,3 +2121,130 @@ body.dark-mode .login-dark-toggle:hover {
     font-size: 20px;
   }
 }
+
+/* Dark Mode - Login Screen Text */
+body.dark-mode .login-screen h1 {
+  color: #e2e8f0;
+}
+
+body.dark-mode .login-screen h2 {
+  color: #FF7E26; /* Keep McCook orange */
+}
+
+body.dark-mode .login-form label {
+  color: #cbd5e0;
+}
+
+body.dark-mode .login-form select,
+body.dark-mode .login-form input {
+  background: #2d3748;
+  color: #e2e8f0;
+  border-color: #4a5568;
+}
+
+body.dark-mode .login-form select option {
+  background: #2d3748;
+  color: #e2e8f0;
+}
+
+/* Dark Mode - User Info Text */
+body.dark-mode .user-info {
+  color: #cbd5e0;
+}
+
+/* Dark Mode - Truck Grid */
+body.dark-mode .truck-grid .truck-card {
+  background: #2d3748;
+  border-color: #4a5568;
+  color: #e2e8f0;
+}
+
+body.dark-mode .truck-grid .truck-card:hover {
+  background: #374151;
+  border-color: #FF7E26;
+}
+
+/* Dark Mode - Mode Selection Cards */
+body.dark-mode .mode-card {
+  background: #2d3748;
+  border-color: #4a5568;
+  color: #e2e8f0;
+}
+
+body.dark-mode .mode-card:hover {
+  background: #374151;
+  border-color: #FF7E26;
+}
+
+body.dark-mode .mode-card h2 {
+  color: #e2e8f0;
+}
+
+body.dark-mode .mode-card p {
+  color: #cbd5e0;
+}
+
+/* Dark Mode - Header Elements */
+body.dark-mode .header h1 {
+  color: #e2e8f0;
+}
+
+body.dark-mode .header p {
+  color: #cbd5e0;
+}
+
+/* Dark Mode - Form Labels */
+body.dark-mode label {
+  color: #cbd5e0;
+}
+
+/* Dark Mode - Small Text / Helper Text */
+body.dark-mode small {
+  color: #a0aec0;
+}
+
+/* Dark Mode - Pre-Trip Checklist */
+body.dark-mode .pretrip-header h2 {
+  color: #e2e8f0;
+}
+
+body.dark-mode .pretrip-header p {
+  color: #cbd5e0;
+}
+
+body.dark-mode .checklist-section h3 {
+  color: #e2e8f0;
+  border-bottom-color: #4a5568;
+}
+
+/* Dark Mode - Driver Status Section */
+body.dark-mode .driver-name,
+body.dark-mode .driver-row span {
+  color: #e2e8f0;
+}
+
+body.dark-mode .checkbox-container span {
+  color: #cbd5e0;
+}
+
+/* Dark Mode - Completion Screen */
+body.dark-mode .completion-screen h2 {
+  color: #e2e8f0;
+}
+
+body.dark-mode .completion-screen p {
+  color: #cbd5e0;
+}
+
+/* Dark Mode - Status Messages */
+body.dark-mode .status-message.success {
+  background: #1e4620;
+  color: #68d391;
+  border-color: #38a169;
+}
+
+body.dark-mode .status-message.error {
+  background: #4a1d1d;
+  color: #fc8181;
+  border-color: #e53e3e;
+}
