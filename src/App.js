@@ -1115,6 +1115,15 @@ function App() {
         )}
         <div className="container">
           <div className="login-screen">
+            {/* Dark Mode Toggle */}
+            <button 
+              onClick={toggleDarkMode}
+              className="dark-mode-toggle login-dark-toggle"
+              title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            >
+              {darkMode ? '☀️' : '🌙'}
+            </button>
+            
             <img src="/mccook-logo.png" alt="McCook Concrete Inc." className="company-logo" />
             <h2>Mileage & Fuel Tracker</h2>
             
@@ -1847,9 +1856,18 @@ function App() {
           <div className="header">
             <h1>Select Truck</h1>
             <p className="user-info">Driver: {displayName}</p>
-            <button onClick={handleLogout} className="btn btn-secondary">
-              Logout
-            </button>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button 
+                onClick={toggleDarkMode}
+                className="dark-mode-toggle"
+                title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+              >
+                {darkMode ? '☀️ Light' : '🌙 Dark'}
+              </button>
+              <button onClick={handleLogout} className="btn btn-secondary">
+                Logout
+              </button>
+            </div>
           </div>
 
           <div className="truck-grid">
@@ -2090,9 +2108,18 @@ function App() {
       <div className="App">
         <div className={`container ${animationClass}`}>
           <div className="header">
-            <button onClick={handleBack} className="btn btn-back">
-              ← Back
-            </button>
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+              <button onClick={handleBack} className="btn btn-back">
+                ← Back
+              </button>
+              <button 
+                onClick={toggleDarkMode}
+                className="dark-mode-toggle"
+                title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+              >
+                {darkMode ? '☀️ Light' : '🌙 Dark'}
+              </button>
+            </div>
             <h1>Select Tracking Mode</h1>
             <p className="user-info">Driver: {displayName} | Truck: {selectedTruck}</p>
           </div>
