@@ -31,10 +31,6 @@ const STATES = ['Nebraska', 'Kansas'];
 
 function App() {
   // Helper functions for Central Time (America/Chicago)
-  const getCentralTime = () => {
-    return new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' });
-  };
-  
   const getCentralDateString = () => {
     const centralDate = new Date().toLocaleString('en-US', { 
       timeZone: 'America/Chicago',
