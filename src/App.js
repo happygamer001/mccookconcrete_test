@@ -203,6 +203,13 @@ function App() {
     changes: {}
   });
   
+  // Capacity planning state
+  const [capacityData, setCapacityData] = useState(null);
+  const [loadingCapacityData, setLoadingCapacityData] = useState(false);
+  const [selectedQuarter, setSelectedQuarter] = useState('q1-2026');
+  const [showCapacityTable, setShowCapacityTable] = useState(false);
+  const [capacitySnapshots, setCapacitySnapshots] = useState([]);
+  
   // Pre-trip checklist state
   const [showPreTripChecklist, setShowPreTripChecklist] = useState(false);
   const [preTripChecklist, setPreTripChecklist] = useState({
@@ -479,6 +486,151 @@ function App() {
       fetchRecentEntries();
     }
   }, [trackingMode]);
+  
+  // Fetch capacity data when entering capacity-planning mode
+  useEffect(() => {
+    if (trackingMode === 'capacity-planning') {
+      fetchCapacityData(selectedQuarter);
+    }
+  }, [trackingMode, selectedQuarter]);
+  
+  // Render Chart.js capacity chart when data loads
+  useEffect(() => {
+    if (capacityData && trackingMode === 'capacity-planning' && !showCapacityTable) {
+      const ctx = document.getElementById('capacityChart');
+      if (!ctx) return;
+      
+      // Destroy existing chart if any
+      const existingChart = window.capacityChartInstance;
+      if (existingChart) {
+        existingChart.destroy();
+      }
+      
+      // Prepare chart data
+      const labels = capacityData.dailyData.map(day => {
+        const date = new Date(day.date);
+        return `${date.getMonth() + 1}/${date.getDate()}`;
+      });
+      
+      const loadsData = capacityData.dailyData.map(day => day.loads);
+      const capacityData_values = capacityData.dailyData.map(day => day.maxCapacity);
+      
+      // Create new chart
+      const newChart = new window.Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Daily Loads',
+              data: loadsData,
+              borderColor: '#FF7E26',
+              backgroundColor: 'rgba(255, 126, 38, 0.1)',
+              borderWidth: 3,
+              fill: true,
+              tension: 0.4,
+              pointRadius: 4,
+              pointHoverRadius: 6
+            },
+            {
+              label: 'Max Capacity',
+              data: capacityData_values,
+              borderColor: '#e53e3e',
+              backgroundColor: 'transparent',
+              borderWidth: 2,
+              borderDash: [5, 5],
+              fill: false,
+              pointRadius: 0
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: {
+              display: true,
+              position: 'top'
+            },
+            title: {
+              display: true,
+              text: 'Daily Loads vs Maximum Capacity',
+              font: { size: 16, weight: 'bold' }
+            },
+            tooltip: {
+              mode: 'index',
+              intersect: false
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Number of Loads'
+              },
+              grid: {
+                color: darkMode ? '#4a5568' : '#e2e8f0'
+              },
+              ticks: {
+                color: darkMode ? '#cbd5e0' : '#4a5568'
+              }
+            },
+            x: {
+              title: {
+                display: true,
+                text: 'Date'
+              },
+              grid: {
+                color: darkMode ? '#4a5568' : '#e2e8f0'
+              },
+              ticks: {
+                color: darkMode ? '#cbd5e0' : '#4a5568'
+              }
+            }
+          }
+        }
+      });
+      
+      window.capacityChartInstance = newChart;
+    }
+  }, [capacityData, trackingMode, showCapacityTable, darkMode]);
+  
+  // Function to fetch capacity data
+  const fetchCapacityData = async (quarter) => {
+    setLoadingCapacityData(true);
+    try {
+      // Define quarter date ranges
+      const quarters = {
+        'q1-2026': { start: '2026-01-01', end: '2026-03-31' },
+        'q2-2026': { start: '2026-04-01', end: '2026-06-30' },
+        'q3-2026': { start: '2026-07-01', end: '2026-09-30' },
+        'q4-2026': { start: '2026-10-01', end: '2026-12-31' },
+        'q1-2025': { start: '2025-01-01', end: '2025-03-31' },
+        'q4-2025': { start: '2025-10-01', end: '2025-12-31' }
+      };
+      
+      const dateRange = quarters[quarter];
+      
+      const response = await fetch(
+        `https://mileage-tracker-final.vercel.app/api/capacity-data?startDate=${dateRange.start}&endDate=${dateRange.end}`
+      );
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        setCapacityData(data);
+      } else {
+        console.error('Failed to fetch capacity data:', data.error);
+        setCapacityData(null);
+      }
+    } catch (error) {
+      console.error('Error fetching capacity data:', error);
+      setCapacityData(null);
+    } finally {
+      setLoadingCapacityData(false);
+    }
+  };
 
   // Handle login
   const handleLogin = () => {
@@ -1250,6 +1402,18 @@ function App() {
               <div className="option-title">Edit Entries</div>
               <div className="option-description">View and correct driver submissions</div>
             </button>
+            
+            <button
+              onClick={() => {
+                setAnimationClass('slide-in-right');
+                setTrackingMode('capacity-planning');
+              }}
+              className="supervisor-option-card"
+            >
+              <div className="option-icon">📈</div>
+              <div className="option-title">Capacity Planning</div>
+              <div className="option-description">Track fleet utilization and forecast hiring needs</div>
+            </button>
           </div>
           
           <div className="dark-mode-toggle">
@@ -1849,6 +2013,196 @@ function App() {
                   </button>
                 </div>
               </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+  
+  // Render Capacity Planning screen
+  if (trackingMode === 'capacity-planning') {
+    const quarters = {
+      'q1-2026': { label: 'Q1 2026', start: '2026-01-01', end: '2026-03-31' },
+      'q2-2026': { label: 'Q2 2026', start: '2026-04-01', end: '2026-06-30' },
+      'q3-2026': { label: 'Q3 2026', start: '2026-07-01', end: '2026-09-30' },
+      'q4-2026': { label: 'Q4 2026', start: '2026-10-01', end: '2026-12-31' },
+      'q1-2025': { label: 'Q1 2025', start: '2025-01-01', end: '2025-03-31' },
+      'q4-2025': { label: 'Q4 2025', start: '2025-10-01', end: '2025-12-31' }
+    };
+    
+    const currentQuarter = quarters[selectedQuarter];
+    
+    return (
+      <div className="App">
+        {isLoading && (
+          <div className="loading-overlay">
+            <div className="loading-spinner"></div>
+            <div className="loading-text">Loading...</div>
+          </div>
+        )}
+        <div className={`container ${animationClass}`}>
+          <div className="header">
+            <button onClick={handleBack} className="btn btn-back">
+              ← Back
+            </button>
+            <h1>📈 Capacity Planning</h1>
+            <p className="user-info">{currentQuarter.label}</p>
+          </div>
+          
+          {/* Quarter Filter */}
+          <div className="capacity-filters">
+            <div className="quarter-selector">
+              {Object.keys(quarters).map(qId => (
+                <button
+                  key={qId}
+                  onClick={() => setSelectedQuarter(qId)}
+                  className={`quarter-btn ${selectedQuarter === qId ? 'active' : ''}`}
+                >
+                  {quarters[qId].label}
+                </button>
+              ))}
+            </div>
+            
+            <div className="view-toggle">
+              <button
+                onClick={() => setShowCapacityTable(false)}
+                className={`toggle-btn ${!showCapacityTable ? 'active' : ''}`}
+              >
+                📊 Chart
+              </button>
+              <button
+                onClick={() => setShowCapacityTable(true)}
+                className={`toggle-btn ${showCapacityTable ? 'active' : ''}`}
+              >
+                📋 Table
+              </button>
+            </div>
+          </div>
+          
+          {loadingCapacityData && (
+            <div className="loading-message">
+              Loading capacity data...
+            </div>
+          )}
+          
+          {!loadingCapacityData && capacityData && (
+            <>
+              {/* KPI Cards */}
+              <div className="capacity-kpis">
+                <div className="kpi-card">
+                  <div className="kpi-label">Avg Daily Loads</div>
+                  <div className="kpi-value">{capacityData.summary.avgDailyLoads}</div>
+                  <div className="kpi-trend">
+                    {capacityData.summary.trendPercent > 0 ? '↗️' : '↘️'} {Math.abs(capacityData.summary.trendPercent)}%
+                  </div>
+                </div>
+                
+                <div className="kpi-card">
+                  <div className="kpi-label">Peak Day</div>
+                  <div className="kpi-value">{capacityData.summary.peakDay.loads}</div>
+                  <div className="kpi-sub">loads</div>
+                </div>
+                
+                <div className="kpi-card">
+                  <div className="kpi-label">Utilization</div>
+                  <div className="kpi-value">{capacityData.summary.avgUtilization}%</div>
+                  <div className={`kpi-status ${capacityData.summary.avgUtilization >= 85 ? 'warning' : 'good'}`}>
+                    {capacityData.summary.avgUtilization >= 85 ? '⚠️ High' : '✅ Good'}
+                  </div>
+                </div>
+                
+                <div className="kpi-card">
+                  <div className="kpi-label">Total Loads</div>
+                  <div className="kpi-value">{capacityData.summary.totalLoads}</div>
+                  <div className="kpi-sub">in {currentQuarter.label}</div>
+                </div>
+              </div>
+              
+              {/* Chart or Table View */}
+              {!showCapacityTable ? (
+                <div className="capacity-chart-container">
+                  <canvas id="capacityChart" style={{ maxHeight: '400px' }}></canvas>
+                </div>
+              ) : (
+                <div className="capacity-table-container">
+                  <table className="capacity-table">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Loads</th>
+                        <th>Max Capacity</th>
+                        <th>Utilization</th>
+                        <th>Trucks Active</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {capacityData.dailyData.map(day => (
+                        <tr key={day.date}>
+                          <td>{new Date(day.date).toLocaleDateString()}</td>
+                          <td>{day.loads}</td>
+                          <td>{day.maxCapacity}</td>
+                          <td>
+                            <span className={day.utilizationPercent >= 85 ? 'util-high' : 'util-normal'}>
+                              {day.utilizationPercent}%
+                            </span>
+                          </td>
+                          <td>{day.trucksActive} of {capacityData.summary.totalTrucks}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              
+              {/* Insights & Recommendations */}
+              <div className="capacity-insights">
+                <h3>💡 Insights & Recommendations</h3>
+                {capacityData.summary.avgUtilization >= 90 && (
+                  <div className="insight-card alert">
+                    <strong>⚠️ High Capacity Alert:</strong> Fleet operating at {capacityData.summary.avgUtilization}% capacity. 
+                    Consider hiring additional truck if trend continues.
+                  </div>
+                )}
+                {capacityData.summary.avgUtilization >= 80 && capacityData.summary.avgUtilization < 90 && (
+                  <div className="insight-card warning">
+                    <strong>📊 Monitor Capacity:</strong> Fleet at {capacityData.summary.avgUtilization}% capacity. 
+                    Watch for continued growth before expanding.
+                  </div>
+                )}
+                {capacityData.summary.avgUtilization < 65 && (
+                  <div className="insight-card info">
+                    <strong>✅ Good Capacity:</strong> Fleet at {capacityData.summary.avgUtilization}% capacity. 
+                    Comfortable operating range with room for growth.
+                  </div>
+                )}
+                {capacityData.summary.trendPercent > 10 && (
+                  <div className="insight-card info">
+                    <strong>📈 Growing Demand:</strong> Load volume increased {capacityData.summary.trendPercent}% during this period. 
+                    Continue monitoring for expansion opportunities.
+                  </div>
+                )}
+              </div>
+              
+              {/* Export Buttons */}
+              <div className="capacity-actions">
+                <button className="btn btn-secondary">
+                  📄 Export CSV
+                </button>
+                <button className="btn btn-secondary">
+                  📋 Export to Notion
+                </button>
+                <button className="btn btn-primary">
+                  📸 Save Snapshot
+                </button>
+              </div>
+            </>
+          )}
+          
+          {!loadingCapacityData && !capacityData && (
+            <div className="no-data-message">
+              No data available for {currentQuarter.label}. 
+              Make sure mileage entries have been submitted for this period.
             </div>
           )}
         </div>
