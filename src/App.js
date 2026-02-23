@@ -157,6 +157,7 @@ function App() {
   
   // Feedback state
   const [submitStatus, setSubmitStatus] = useState(null);
+  const [isLoading, setIsLoading] = useState(false); // Loading indicator
   
   // Completion screen state
   const [showCompletionScreen, setShowCompletionScreen] = useState(false);
@@ -514,6 +515,7 @@ function App() {
   // Handle pre-trip checklist submission
   const submitPreTripChecklist = async () => {
     const today = getCentralDateString();
+    setIsLoading(true);
     
     // No validation needed - unchecked = good, checked = issue
     // Drivers only check boxes when there are problems
@@ -560,12 +562,15 @@ function App() {
     } catch (error) {
       console.error('Error submitting pre-trip checklist:', error);
       alert('Failed to submit checklist. Please try again.');
+      setIsLoading(false);
     }
+    setIsLoading(false);
   };
   
   // Handle "All Good - No Issues" bypass
   const handleAllGood = async () => {
     const today = getCentralDateString();
+    setIsLoading(true);
     
     // All boxes UNCHECKED = everything is good (matches paper form)
     const allGood = {
@@ -628,7 +633,9 @@ function App() {
     } catch (error) {
       console.error('Error submitting pre-trip checklist:', error);
       alert('Failed to submit. Please try again.');
+      setIsLoading(false);
     }
+    setIsLoading(false);
   };
 
   // Handle back button
@@ -771,6 +778,7 @@ function App() {
 
   const submitMileageData = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
     
     const driverName = currentDriver === 'Other' ? customDriverName : currentDriver;
     
@@ -873,6 +881,7 @@ function App() {
       } catch (error) {
         console.error('Error completing mileage:', error);
         setSubmitStatus({ type: 'error', message: 'Failed to submit data. Please try again.' });
+        setIsLoading(false);
       }
     } else {
       // Starting a new entry
@@ -912,13 +921,16 @@ function App() {
       } catch (error) {
         console.error('Error starting mileage:', error);
         setSubmitStatus({ type: 'error', message: 'Failed to submit data. Please try again.' });
+        setIsLoading(false);
       }
     }
+    setIsLoading(false);
   };
 
   // Submit fuel data to Notion
   const submitFuelData = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
 
     const driverName = currentDriver === 'Other' ? customDriverName : currentDriver;
     const isSemi = selectedTruck === 'Semi';
@@ -964,7 +976,9 @@ function App() {
     } catch (error) {
       console.error('Error submitting fuel:', error);
       setSubmitStatus({ type: 'error', message: 'Failed to submit data. Please try again.' });
+      setIsLoading(false);
     }
+    setIsLoading(false);
   };
 
   // Helper functions for Daily Report
@@ -1013,6 +1027,7 @@ function App() {
   // Submit daily report to Notion
   const submitDailyReport = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
     
     const submitterName = isBatchManager ? currentDriver : customDriverName;
     
@@ -1083,13 +1098,21 @@ function App() {
     } catch (error) {
       console.error('Error submitting daily report:', error);
       setSubmitStatus({ type: 'error', message: 'Failed to submit data. Please try again.' });
+      setIsLoading(false);
     }
+    setIsLoading(false);
   };
 
   // Render login screen
   if (!isLoggedIn) {
     return (
       <div className="App">
+        {isLoading && (
+          <div className="loading-overlay">
+            <div className="loading-spinner"></div>
+            <div className="loading-text">Loading...</div>
+          </div>
+        )}
         <div className="container">
           <div className="login-screen">
             <img src="/mccook-logo.png" alt="McCook Concrete Inc." className="company-logo" />
@@ -1146,6 +1169,12 @@ function App() {
   if (trackingMode === 'supervisor-menu') {
     return (
       <div className="App">
+        {isLoading && (
+          <div className="loading-overlay">
+            <div className="loading-spinner"></div>
+            <div className="loading-text">Loading...</div>
+          </div>
+        )}
         <div className={`container ${animationClass}`}>
           <div className="header">
             <h1>📊 Supervisor Dashboard</h1>
@@ -1849,6 +1878,12 @@ function App() {
     
     return (
       <div className="App">
+        {isLoading && (
+          <div className="loading-overlay">
+            <div className="loading-spinner"></div>
+            <div className="loading-text">Submitting...</div>
+          </div>
+        )}
         <div className={`container ${animationClass}`}>
           <div className="header">
             <button onClick={() => {
@@ -2207,6 +2242,12 @@ function App() {
 
     return (
       <div className="App">
+        {isLoading && (
+          <div className="loading-overlay">
+            <div className="loading-spinner"></div>
+            <div className="loading-text">Submitting...</div>
+          </div>
+        )}
         <div className={`container ${animationClass}`}>
           <div className="header">
             <button onClick={handleBack} className="btn btn-back">
@@ -2543,6 +2584,12 @@ function App() {
 
     return (
       <div className="App">
+        {isLoading && (
+          <div className="loading-overlay">
+            <div className="loading-spinner"></div>
+            <div className="loading-text">Submitting...</div>
+          </div>
+        )}
         <div className={`container ${animationClass}`}>
           <div className="header">
             <button onClick={handleBack} className="btn btn-back">
@@ -2669,6 +2716,12 @@ function App() {
     
     return (
       <div className="App">
+        {isLoading && (
+          <div className="loading-overlay">
+            <div className="loading-spinner"></div>
+            <div className="loading-text">Submitting...</div>
+          </div>
+        )}
         <div className={`container ${animationClass}`}>
           <div className="header">
             <button onClick={handleBack} className="btn-back">← Back</button>
