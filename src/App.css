@@ -2069,3 +2069,55 @@ body.dark-mode .loading-spinner {
   border-color: #4a5568;
   border-top-color: #FF7E26;
 }
+
+/* Dark Mode Toggle on Login Screen */
+.login-dark-toggle {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  font-size: 24px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+  z-index: 100;
+}
+
+.login-dark-toggle:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: scale(1.1);
+}
+
+body.dark-mode .login-dark-toggle {
+  background: rgba(0, 0, 0, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+body.dark-mode .login-dark-toggle:hover {
+  background: rgba(0, 0, 0, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* Make login screen position relative for absolute positioning */
+.login-screen {
+  position: relative;
+}
+
+/* Mobile responsiveness for dark mode toggle */
+@media (max-width: 768px) {
+  .login-dark-toggle {
+    top: 10px;
+    right: 10px;
+    width: 45px;
+    height: 45px;
+    font-size: 20px;
+  }
+}
