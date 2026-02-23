@@ -208,7 +208,6 @@ function App() {
   const [loadingCapacityData, setLoadingCapacityData] = useState(false);
   const [selectedQuarter, setSelectedQuarter] = useState('q1-2026');
   const [showCapacityTable, setShowCapacityTable] = useState(false);
-  const [capacitySnapshots, setCapacitySnapshots] = useState([]);
   
   // Pre-trip checklist state
   const [showPreTripChecklist, setShowPreTripChecklist] = useState(false);
