@@ -169,6 +169,15 @@ function App() {
     return saved === 'true';
   });
   
+  // Toggle dark mode function
+  const toggleDarkMode = () => {
+    setDarkMode(prev => {
+      const newValue = !prev;
+      localStorage.setItem('darkMode', newValue);
+      return newValue;
+    });
+  };
+  
   // Online/offline state
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   
