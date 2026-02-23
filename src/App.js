@@ -30,6 +30,41 @@ const BATCH_MANAGERS = [
 const STATES = ['Nebraska', 'Kansas'];
 
 function App() {
+  // Helper functions for Central Time (America/Chicago)
+  const getCentralTime = () => {
+    return new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' });
+  };
+  
+  const getCentralDateString = () => {
+    const centralDate = new Date().toLocaleString('en-US', { 
+      timeZone: 'America/Chicago',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    });
+    // Convert from MM/DD/YYYY to YYYY-MM-DD
+    const [month, day, year] = centralDate.split('/');
+    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+  };
+  
+  const getCentralISOString = () => {
+    // Get current time in Central timezone
+    const centralDateStr = new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' });
+    const centralDate = new Date(centralDateStr);
+    return centralDate.toISOString();
+  };
+  
+  const formatCentralTime = (isoString) => {
+    if (!isoString) return '';
+    const date = new Date(isoString);
+    return date.toLocaleTimeString('en-US', { 
+      timeZone: 'America/Chicago',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+  };
+  
   // Authentication state
   const [currentDriver, setCurrentDriver] = useState('');
   const [customDriverName, setCustomDriverName] = useState('');
@@ -44,12 +79,21 @@ function App() {
   const [animationClass, setAnimationClass] = useState('');
   
   // Mileage form state
-  const [mileageData, setMileageData] = useState({
-    date: new Date().toISOString().split('T')[0],
+  const [mileageData, setMileageData] = useState(() => ({
+    date: (() => {
+      const centralDate = new Date().toLocaleString('en-US', { 
+        timeZone: 'America/Chicago',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
+      const [month, day, year] = centralDate.split('/');
+      return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    })(),
     state: 'Nebraska',
     mileageStart: '',
     mileageEnd: ''
-  });
+  }));
   
   // Incomplete entry state
   const [incompleteEntry, setIncompleteEntry] = useState(null);
@@ -66,25 +110,43 @@ function App() {
   const [checkingLocation, setCheckingLocation] = useState(false);
   
   // Fuel form state
-  const [fuelData, setFuelData] = useState({
-    date: new Date().toISOString().split('T')[0],
+  const [fuelData, setFuelData] = useState(() => ({
+    date: (() => {
+      const centralDate = new Date().toLocaleString('en-US', { 
+        timeZone: 'America/Chicago',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
+      const [month, day, year] = centralDate.split('/');
+      return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    })(),
     state: 'Nebraska',
     gallons: '',
     cost: '',
     location: '',
     fuelPhoto: null
-  });
+  }));
   
   // Daily Report form state
-  const [dailyReportData, setDailyReportData] = useState({
+  const [dailyReportData, setDailyReportData] = useState(() => ({
     name: '',
-    date: new Date().toISOString().split('T')[0],
+    date: (() => {
+      const centralDate = new Date().toLocaleString('en-US', { 
+        timeZone: 'America/Chicago',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
+      const [month, day, year] = centralDate.split('/');
+      return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    })(),
     yardsOut: '',
     tripsOut: '',
     fuelReading: '',
     issues: '',
     issuePhoto: null
-  });
+  }));
 
   // Driver work status - initialized with known drivers + 2 blanks
   const [driverStatus, setDriverStatus] = useState({
@@ -455,7 +517,7 @@ function App() {
   
   // Handle pre-trip checklist submission
   const submitPreTripChecklist = async () => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = getCentralDateString();
     
     // No validation needed - unchecked = good, checked = issue
     // Drivers only check boxes when there are problems
@@ -507,7 +569,7 @@ function App() {
   
   // Handle "All Good - No Issues" bypass
   const handleAllGood = async () => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = getCentralDateString();
     
     // All boxes UNCHECKED = everything is good (matches paper form)
     const allGood = {
@@ -588,13 +650,13 @@ function App() {
       setMileageAlert(null); // Clear any mileage alerts
       // Reset forms
       setMileageData({
-        date: new Date().toISOString().split('T')[0],
+        date: getCentralDateString(),
         state: 'Nebraska',
         mileageStart: '',
         mileageEnd: ''
       });
       setFuelData({
-        date: new Date().toISOString().split('T')[0],
+        date: getCentralDateString(),
         state: 'Nebraska',
         gallons: '',
         cost: '',
@@ -652,7 +714,7 @@ function App() {
           date: mileageData.date,
           state: newState,
           mileageStart: parseFloat(crossStateMileage),
-          timestamp: new Date().toISOString()
+          timestamp: getCentralISOString()
         }),
       });
       
@@ -683,17 +745,17 @@ function App() {
   // Submit mileage data to Notion
   // Handle arriving on job site
   const handleArrivedOnJobSite = () => {
-    const arrivalTime = new Date().toISOString();
+    const arrivalTime = getCentralISOString();
     setJobSiteArrivalTime(arrivalTime);
     setSubmitStatus({ 
       type: 'success', 
-      message: `⏱️ Job site timer started at ${new Date().toLocaleTimeString()}` 
+      message: `⏱️ Job site timer started at ${formatCentralTime(arrivalTime)}` 
     });
   };
   
   // Handle leaving job site
   const handleLeavingJobSite = () => {
-    const departureTime = new Date().toISOString();
+    const departureTime = getCentralISOString();
     setJobSiteDepartureTime(departureTime);
     
     // Calculate job site duration
@@ -788,7 +850,7 @@ function App() {
                 mileageStart: parseFloat(mileageData.mileageStart),
                 mileageEnd: parseFloat(mileageData.mileageEnd),
                 totalMiles: totalMiles,
-                timestamp: new Date().toISOString()
+                timestamp: getCentralISOString()
               }],
               totalMiles: totalMiles
             });
@@ -804,7 +866,7 @@ function App() {
           
           // Reset form
           setMileageData({
-            date: new Date().toISOString().split('T')[0],
+            date: getCentralDateString(),
             state: 'Nebraska',
             mileageStart: '',
             mileageEnd: ''
@@ -825,7 +887,7 @@ function App() {
         date: mileageData.date,
         state: mileageData.state,
         mileageStart: parseFloat(mileageData.mileageStart),
-        timestamp: new Date().toISOString()
+        timestamp: getCentralISOString()
       };
 
       try {
@@ -843,7 +905,7 @@ function App() {
           setShowJobSiteButtons(true); // Enable job site timing buttons
           // Reset form
           setMileageData({
-            date: new Date().toISOString().split('T')[0],
+            date: getCentralDateString(),
             state: 'Nebraska',
             mileageStart: '',
             mileageEnd: ''
@@ -874,7 +936,7 @@ function App() {
       cost: isSemi ? parseFloat(fuelData.cost) : null,
       location: isSemi ? (fuelData.location || 'N/A') : null,
       fuelPhoto: isSemi ? fuelData.fuelPhoto : null,
-      timestamp: new Date().toISOString()
+      timestamp: getCentralISOString()
     };
 
     try {
@@ -889,7 +951,7 @@ function App() {
       if (response.ok) {
         // Reset fuel form
         setFuelData({
-          date: new Date().toISOString().split('T')[0],
+          date: getCentralDateString(),
           state: 'Nebraska',
           gallons: '',
           cost: '',
@@ -983,7 +1045,7 @@ function App() {
       issues: dailyReportData.issues || 'N/A',
       issuePhoto: dailyReportData.issuePhoto,
       preparedBy: submitterName,
-      timestamp: new Date().toISOString()
+      timestamp: getCentralISOString()
     };
 
     try {
@@ -1001,7 +1063,7 @@ function App() {
         // Reset form
         setDailyReportData({
           name: '',
-          date: new Date().toISOString().split('T')[0],
+          date: getCentralDateString(),
           yardsOut: '',
           tripsOut: '',
           fuelReading: '',
@@ -2236,7 +2298,7 @@ function App() {
                     textAlign: 'center'
                   }}>
                     <span style={{ color: '#1890ff', fontWeight: '600' }}>
-                      ⏱️ On Job Site Since: {new Date(jobSiteArrivalTime).toLocaleTimeString()}
+                      ⏱️ On Job Site Since: {formatCentralTime(jobSiteArrivalTime)}
                     </span>
                   </div>
                   <button
