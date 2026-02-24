@@ -1339,6 +1339,20 @@ function App() {
     
     const submitterName = isBatchManager ? currentDriver : customDriverName;
     
+    // Validate submitter name
+    if (!submitterName || submitterName.trim() === '') {
+      setSubmitStatus({ type: 'error', message: '❌ Error: Batch manager name is missing. Please log in again.' });
+      setIsLoading(false);
+      return;
+    }
+    
+    // Validate date
+    if (!dailyReportData.date) {
+      setSubmitStatus({ type: 'error', message: '❌ Error: Please select a date.' });
+      setIsLoading(false);
+      return;
+    }
+    
     // Build drivers array from driver status
     const drivers = [];
     Object.keys(driverStatus).forEach(key => {
@@ -1355,16 +1369,18 @@ function App() {
     });
     
     const payload = {
-      name: dailyReportData.name,
+      name: submitterName,  // Use logged-in batch manager name
       date: dailyReportData.date,
-      yardsOut: parseFloat(dailyReportData.yardsOut),
-      tripsOut: parseFloat(dailyReportData.tripsOut),
+      yardsOut: dailyReportData.yardsOut ? parseFloat(dailyReportData.yardsOut) : 0,
+      tripsOut: dailyReportData.tripsOut ? parseFloat(dailyReportData.tripsOut) : 0,
       drivers: drivers,
-      fuelReading: parseFloat(dailyReportData.fuelReading),
+      fuelReading: dailyReportData.fuelReading ? parseFloat(dailyReportData.fuelReading) : 0,
       issues: dailyReportData.issues || 'N/A',
       preparedBy: submitterName,
       timestamp: getCentralISOString()
     };
+
+    console.log('Submitting daily report:', payload); // Debug log
 
     try {
       const response = await fetch('https://mileage-tracker-final.vercel.app/api/daily-report', {
@@ -1374,6 +1390,9 @@ function App() {
         },
         body: JSON.stringify(payload),
       });
+
+      const responseData = await response.json();
+      console.log('Response:', response.status, responseData); // Debug log
 
       if (response.ok) {
         setSubmitStatus({ type: 'success', message: '✅ Daily report submitted successfully!' });
@@ -1399,12 +1418,15 @@ function App() {
           'Custom2': { name: '', halfDay: false, fullDay: false }
         });
       } else {
-        throw new Error('Failed to submit data');
+        // Show detailed error from backend
+        const errorMessage = responseData.error || responseData.message || 'Failed to submit data';
+        const errorDetails = responseData.details ? `\n${responseData.details}` : '';
+        const errorHint = responseData.hint ? `\n${responseData.hint}` : '';
+        setSubmitStatus({ type: 'error', message: `❌ ${errorMessage}${errorDetails}${errorHint}` });
       }
     } catch (error) {
       console.error('Error submitting daily report:', error);
-      setSubmitStatus({ type: 'error', message: 'Failed to submit data. Please try again.' });
-      setIsLoading(false);
+      setSubmitStatus({ type: 'error', message: '❌ Network error. Please check your connection and try again.' });
     }
     setIsLoading(false);
   };
@@ -3452,15 +3474,14 @@ function App() {
 
           <form onSubmit={submitDailyReport} className="tracking-form daily-report-form">
             <div className="form-group">
-              <label htmlFor="report-name">Name:</label>
+              <label htmlFor="report-name">Batch Manager:</label>
               <input
                 id="report-name"
                 type="text"
-                value={dailyReportData.name}
-                onChange={(e) => setDailyReportData({...dailyReportData, name: e.target.value})}
-                placeholder="Enter your name"
-                required
+                value={currentDriver === 'Other' ? customDriverName : currentDriver}
+                readOnly
                 className="text-input"
+                style={{ backgroundColor: '#f7fafc', cursor: 'not-allowed' }}
               />
             </div>
 
