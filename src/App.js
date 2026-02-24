@@ -243,7 +243,7 @@ function App() {
     
     try {
       const response = await fetch(
-        `https://mileage-tracker-final.vercel.app/api/get-incomplete-mileage?driver=${encodeURIComponent(driverName)}&truck=${encodeURIComponent(selectedTruck)}`
+        `https://mileage-tracker-final.vercel.app/api/driver?action=check-incomplete&driver=${encodeURIComponent(driverName)}&truck=${encodeURIComponent(selectedTruck)}`
       );
       
       const data = await response.json();
@@ -419,7 +419,7 @@ function App() {
       const fetchWeekData = async () => {
         setLoadingWeekData(true);
         try {
-          const response = await fetch('https://mileage-tracker-final.vercel.app/api/get-week-summary');
+          const response = await fetch('https://mileage-tracker-final.vercel.app/api/supervisor-data?view=week-at-a-glance');
           const data = await response.json();
           if (data.success) {
             setWeekData(data);
@@ -440,7 +440,7 @@ function App() {
       const fetchFleetStatus = async () => {
         setLoadingFleetStatus(true);
         try {
-          const response = await fetch('https://mileage-tracker-final.vercel.app/api/get-fleet-status');
+          const response = await fetch('https://mileage-tracker-final.vercel.app/api/supervisor-data?view=fleet-status');
           const data = await response.json();
           if (data.success) {
             setFleetStatus(data);
@@ -463,8 +463,8 @@ function App() {
         try {
           // Fetch both mileage and fuel entries
           const [mileageRes, fuelRes] = await Promise.all([
-            fetch('https://mileage-tracker-final.vercel.app/api/get-recent-entries?type=mileage&days=7'),
-            fetch('https://mileage-tracker-final.vercel.app/api/get-recent-entries?type=fuel&days=7')
+            fetch('https://mileage-tracker-final.vercel.app/api/supervisor-data?view=recent-entries?type=mileage&days=7'),
+            fetch('https://mileage-tracker-final.vercel.app/api/supervisor-data?view=recent-entries?type=fuel&days=7')
           ]);
           
           const mileageData = await mileageRes.json();
@@ -612,7 +612,7 @@ function App() {
       const dateRange = quarters[quarter];
       
       const response = await fetch(
-        `https://mileage-tracker-final.vercel.app/api/capacity-data?startDate=${dateRange.start}&endDate=${dateRange.end}`
+        `https://mileage-tracker-final.vercel.app/api/supervisor-data?view=capacity&startDate=${dateRange.start}&endDate=${dateRange.end}`
       );
       
       const data = await response.json();
@@ -848,15 +848,17 @@ function App() {
     
     try {
       // Step 1: Complete the current shift in the current state
-      const completeResponse = await fetch('https://mileage-tracker-final.vercel.app/api/mileage', {
+      const completeResponse = await fetch('https://mileage-tracker-final.vercel.app/api/driver', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          action: 'complete',
-          entryId: incompleteEntry.id,
-          mileageEnd: parseFloat(crossStateMileage)
+          action: 'complete-mileage',
+          pageId: incompleteEntry.id,
+          endMileage: parseFloat(crossStateMileage),
+          endState: incompleteEntry.state || mileageData.state,
+          endTime: getCentralISOString()
         }),
       });
       
@@ -865,19 +867,19 @@ function App() {
       }
       
       // Step 2: Start a new shift in the new state
-      const startResponse = await fetch('https://mileage-tracker-final.vercel.app/api/mileage', {
+      const startResponse = await fetch('https://mileage-tracker-final.vercel.app/api/driver', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          action: 'start',
-          driver: driverName,
-          truck: selectedTruck,
+          action: 'start-mileage',
+          driverName: driverName,
+          truckNumber: selectedTruck,
           date: mileageData.date,
-          state: newState,
-          mileageStart: parseFloat(crossStateMileage),
-          timestamp: getCentralISOString()
+          currentState: newState,
+          startMileage: parseFloat(crossStateMileage),
+          startTime: getCentralISOString()
         }),
       });
       
@@ -968,16 +970,17 @@ function App() {
 
       try {
         // Update the existing Notion entry
-        const response = await fetch('https://mileage-tracker-final.vercel.app/api/mileage', {
+        const response = await fetch('https://mileage-tracker-final.vercel.app/api/driver', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            action: 'complete',
-            entryId: incompleteEntry.id,
-            mileageEnd: parseFloat(mileageData.mileageEnd),
-            totalMiles: totalMiles,
+            action: 'complete-mileage',
+            pageId: incompleteEntry.id,
+            endMileage: parseFloat(mileageData.mileageEnd),
+            endState: mileageData.state,
+            endTime: getCentralISOString(),
             jobSiteArrivalTime: jobSiteArrivalTime,
             jobSiteDepartureTime: jobSiteDepartureTime,
             totalDeliveryTime: parseFloat(totalDeliveryHours),
@@ -989,7 +992,7 @@ function App() {
           // Fetch all completed trips for this driver/truck/date to show full journey
           try {
             const tripsResponse = await fetch(
-              `https://mileage-tracker-final.vercel.app/api/get-daily-trips?driver=${encodeURIComponent(driverName)}&truck=${encodeURIComponent(selectedTruck)}&date=${mileageData.date}`
+              `https://mileage-tracker-final.vercel.app/api/driver?action=get-daily-trips&driver=${encodeURIComponent(driverName)}&truck=${encodeURIComponent(selectedTruck)}&date=${mileageData.date}`
             );
             
             const tripsData = await tripsResponse.json();
@@ -1046,17 +1049,17 @@ function App() {
     } else {
       // Starting a new entry
       const payload = {
-        action: 'start',
-        driver: driverName,
-        truck: selectedTruck,
+        action: 'start-mileage',
+        driverName: driverName,
+        truckNumber: selectedTruck,
         date: mileageData.date,
-        state: mileageData.state,
-        mileageStart: parseFloat(mileageData.mileageStart),
-        timestamp: getCentralISOString()
+        currentState: mileageData.state,
+        startMileage: parseFloat(mileageData.mileageStart),
+        startTime: getCentralISOString()
       };
 
       try {
-        const response = await fetch('https://mileage-tracker-final.vercel.app/api/mileage', {
+        const response = await fetch('https://mileage-tracker-final.vercel.app/api/driver', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -1096,19 +1099,16 @@ function App() {
     const isSemi = selectedTruck === 'Semi';
     
     const payload = {
-      driver: driverName,
-      truck: selectedTruck,
+      action: 'submit-fuel',
+      driverName: driverName,
+      truckNumber: selectedTruck,
       date: fuelData.date,
-      state: fuelData.state,
       gallons: parseFloat(fuelData.gallons),
-      cost: isSemi ? parseFloat(fuelData.cost) : null,
-      location: isSemi ? (fuelData.location || 'N/A') : null,
-      fuelPhoto: isSemi ? fuelData.fuelPhoto : null,
-      timestamp: getCentralISOString()
+      location: isSemi ? (fuelData.location || 'N/A') : null
     };
 
     try {
-      const response = await fetch('https://mileage-tracker-final.vercel.app/api/fuel', {
+      const response = await fetch('https://mileage-tracker-final.vercel.app/api/driver', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1530,7 +1530,7 @@ function App() {
     const handleRefreshFleet = async () => {
       setLoadingFleetStatus(true);
       try {
-        const response = await fetch('https://mileage-tracker-final.vercel.app/api/get-fleet-status');
+        const response = await fetch('https://mileage-tracker-final.vercel.app/api/supervisor-data?view=fleet-status');
         const data = await response.json();
         if (data.success) {
           setFleetStatus(data);
