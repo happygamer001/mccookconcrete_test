@@ -493,11 +493,42 @@ function App() {
     }
   }, [trackingMode, selectedQuarter]);
   
+  // Load Chart.js library when needed
+  useEffect(() => {
+    // Check if Chart.js is already loaded
+    if (window.Chart) return;
+    
+    // Load Chart.js from CDN
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
+    script.async = true;
+    script.onload = () => {
+      console.log('Chart.js loaded successfully');
+    };
+    script.onerror = () => {
+      console.error('Failed to load Chart.js');
+    };
+    document.head.appendChild(script);
+    
+    return () => {
+      // Cleanup: remove script if component unmounts
+      if (document.head.contains(script)) {
+        document.head.removeChild(script);
+      }
+    };
+  }, []);
+  
   // Render Chart.js capacity chart when data loads
   useEffect(() => {
     if (capacityData && trackingMode === 'capacity-planning' && !showCapacityTable) {
       const ctx = document.getElementById('capacityChart');
       if (!ctx) return;
+      
+      // Wait for Chart.js to be available
+      if (!window.Chart) {
+        console.log('Waiting for Chart.js to load...');
+        return;
+      }
       
       // Destroy existing chart if any
       const existingChart = window.capacityChartInstance;
