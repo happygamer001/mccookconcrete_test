@@ -26,6 +26,7 @@ module.exports = async (req, res) => {
   const notionApiKey = process.env.NOTION_API_KEY;
   const mileageDatabaseId = process.env.NOTION_MILEAGE_DB_ID;
   const fuelDatabaseId = process.env.NOTION_FUEL_DB_ID;
+  const dailyReportDatabaseId = process.env.NOTION_DAILY_REPORT_DB_ID;
 
   if (!notionApiKey) {
     return res.status(500).json({ error: 'Missing NOTION_API_KEY' });
@@ -34,10 +35,10 @@ module.exports = async (req, res) => {
   try {
     switch (view) {
       case 'capacity':
-        return await handleCapacityPlanning(req, res, notionApiKey, mileageDatabaseId);
+        return await handleCapacityPlanning(req, res, notionApiKey, mileageDatabaseId, dailyReportDatabaseId);
       
       case 'week-at-a-glance':
-        return await handleWeekAtAGlance(req, res, notionApiKey, mileageDatabaseId);
+        return await handleWeekAtAGlance(req, res, notionApiKey, mileageDatabaseId, dailyReportDatabaseId);
       
       case 'fleet-status':
         return await handleFleetStatus(req, res, notionApiKey, mileageDatabaseId);
@@ -59,7 +60,7 @@ module.exports = async (req, res) => {
 };
 
 // Helper: Capacity Planning
-async function handleCapacityPlanning(req, res, apiKey, databaseId) {
+async function handleCapacityPlanning(req, res, apiKey, databaseId, dailyReportDatabaseId) {
   const { startDate, endDate } = req.query;
 
   if (!startDate || !endDate) {
@@ -117,6 +118,59 @@ async function handleCapacityPlanning(req, res, apiKey, databaseId) {
     return res.status(500).json({ error: 'Failed to fetch data from Notion' });
   }
 
+  // Fetch concrete yardage from daily reports if database ID exists
+  let concreteData = {};
+  if (dailyReportDatabaseId) {
+    try {
+      const concreteResponse = await fetch('https://api.notion.com/v1/databases/' + dailyReportDatabaseId + '/query', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+          'Notion-Version': '2022-06-28'
+        },
+        body: JSON.stringify({
+          filter: {
+            and: [
+              {
+                property: 'Date',
+                date: {
+                  on_or_after: startDate
+                }
+              },
+              {
+                property: 'Date',
+                date: {
+                  on_or_before: endDate
+                }
+              }
+            ]
+          }
+        })
+      });
+
+      const concreteResponseData = await concreteResponse.json();
+      
+      if (concreteResponse.ok && concreteResponseData.results) {
+        // Group concrete yardage by date
+        concreteResponseData.results.forEach(entry => {
+          const date = entry.properties.Date?.date?.start;
+          const yards = entry.properties['Concrete Delivered (yards)']?.number || 0;
+          
+          if (date) {
+            if (!concreteData[date]) {
+              concreteData[date] = 0;
+            }
+            concreteData[date] += yards;
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching concrete data:', error);
+      // Continue without concrete data if there's an error
+    }
+  }
+
   // Process results and group by date
   const dailyData = {};
   const truckSet = new Set();
@@ -133,7 +187,8 @@ async function handleCapacityPlanning(req, res, apiKey, databaseId) {
         date: date,
         loads: 0,
         trucks: new Set(),
-        drivers: new Set()
+        drivers: new Set(),
+        concreteYards: concreteData[date] || 0
       };
     }
 
@@ -156,16 +211,20 @@ async function handleCapacityPlanning(req, res, apiKey, databaseId) {
     maxCapacity: maxCapacity,
     trucksActive: day.trucks.size,
     utilizationPercent: Math.round((day.loads / maxCapacity) * 100),
-    drivers: Array.from(day.drivers)
+    drivers: Array.from(day.drivers),
+    concreteYards: day.concreteYards
   }));
 
   // Calculate summary metrics
   const totalLoads = dailyArray.reduce((sum, day) => sum + day.loads, 0);
+  const totalConcreteYards = dailyArray.reduce((sum, day) => sum + day.concreteYards, 0);
   const avgDailyLoads = dailyArray.length > 0 ? Math.round(totalLoads / dailyArray.length) : 0;
+  const avgDailyYards = dailyArray.length > 0 ? Math.round(totalConcreteYards / dailyArray.length) : 0;
   const avgUtilization = dailyArray.length > 0 
     ? Math.round(dailyArray.reduce((sum, day) => sum + day.utilizationPercent, 0) / dailyArray.length)
     : 0;
   const peakDay = dailyArray.reduce((max, day) => day.loads > max.loads ? day : max, { loads: 0 });
+  const peakYardsDay = dailyArray.reduce((max, day) => day.concreteYards > max.concreteYards ? day : max, { concreteYards: 0 });
 
   // Calculate trend (compare first half to second half)
   const midpoint = Math.floor(dailyArray.length / 2);
@@ -191,11 +250,17 @@ async function handleCapacityPlanning(req, res, apiKey, databaseId) {
     },
     summary: {
       totalLoads,
+      totalConcreteYards,
       avgDailyLoads,
+      avgDailyYards,
       avgUtilization,
       peakDay: {
         date: peakDay.date,
         loads: peakDay.loads
+      },
+      peakYardsDay: {
+        date: peakYardsDay.date,
+        yards: peakYardsDay.concreteYards
       },
       trendPercent,
       totalTrucks,
@@ -206,7 +271,7 @@ async function handleCapacityPlanning(req, res, apiKey, databaseId) {
 }
 
 // Helper: Week at a Glance
-async function handleWeekAtAGlance(req, res, apiKey, databaseId) {
+async function handleWeekAtAGlance(req, res, apiKey, databaseId, dailyReportDatabaseId) {
   if (!databaseId) {
     return res.status(500).json({ error: 'Missing NOTION_MILEAGE_DB_ID' });
   }
@@ -253,6 +318,51 @@ async function handleWeekAtAGlance(req, res, apiKey, databaseId) {
     return res.status(500).json({ error: 'Failed to fetch week data' });
   }
 
+  // Fetch concrete yardage from daily reports if database ID exists
+  let concreteDataByDate = {};
+  if (dailyReportDatabaseId) {
+    try {
+      const concreteResponse = await fetch('https://api.notion.com/v1/databases/' + dailyReportDatabaseId + '/query', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+          'Notion-Version': '2022-06-28'
+        },
+        body: JSON.stringify({
+          filter: {
+            and: [
+              {
+                property: 'Date',
+                date: {
+                  on_or_after: startDate
+                }
+              }
+            ]
+          }
+        })
+      });
+
+      const concreteResponseData = await concreteResponse.json();
+      
+      if (concreteResponse.ok && concreteResponseData.results) {
+        concreteResponseData.results.forEach(entry => {
+          const date = entry.properties.Date?.date?.start;
+          const yards = entry.properties['Concrete Delivered (yards)']?.number || 0;
+          
+          if (date) {
+            if (!concreteDataByDate[date]) {
+              concreteDataByDate[date] = 0;
+            }
+            concreteDataByDate[date] += yards;
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching concrete data for week:', error);
+    }
+  }
+
   // Group by driver
   const driverStats = {};
 
@@ -279,6 +389,7 @@ async function handleWeekAtAGlance(req, res, apiKey, databaseId) {
   });
 
   const driverArray = Object.values(driverStats);
+  const totalConcreteYards = Object.values(concreteDataByDate).reduce((sum, yards) => sum + yards, 0);
 
   return res.status(200).json({
     success: true,
@@ -286,7 +397,8 @@ async function handleWeekAtAGlance(req, res, apiKey, databaseId) {
       start: startDate,
       end: endDate
     },
-    drivers: driverArray
+    drivers: driverArray,
+    totalConcreteYards: totalConcreteYards
   });
 }
 
