@@ -2618,3 +2618,99 @@ body.dark-mode .no-data-message {
     width: 100%;
   }
 }
+
+/* Dark Mode - Week at a Glance */
+body.dark-mode .week-summary-card {
+  background: #2d3748;
+  border-color: #4a5568;
+}
+
+body.dark-mode .week-summary-card h3,
+body.dark-mode .week-summary-card p,
+body.dark-mode .week-summary-card .stat-value,
+body.dark-mode .week-summary-card .stat-label {
+  color: #e2e8f0;
+}
+
+body.dark-mode .week-summary-card .stat-label {
+  color: #cbd5e0;
+}
+
+/* Dark Mode - Fleet Status */
+body.dark-mode .fleet-card {
+  background: #2d3748;
+  border-color: #4a5568;
+}
+
+body.dark-mode .fleet-card h3,
+body.dark-mode .fleet-card p,
+body.dark-mode .fleet-card .driver-name,
+body.dark-mode .fleet-card .truck-info {
+  color: #e2e8f0;
+}
+
+body.dark-mode .fleet-card .status-badge {
+  background: #374151;
+  color: #e2e8f0;
+}
+
+/* Dark Mode - Edit Entries */
+body.dark-mode .entry-card {
+  background: #2d3748;
+  border-color: #4a5568;
+}
+
+body.dark-mode .entry-card h4,
+body.dark-mode .entry-card p,
+body.dark-mode .entry-card .entry-detail {
+  color: #e2e8f0;
+}
+
+body.dark-mode .entry-card .entry-label {
+  color: #cbd5e0;
+}
+
+/* Dark Mode - Daily Report */
+body.dark-mode .report-card {
+  background: #2d3748;
+  border-color: #4a5568;
+}
+
+body.dark-mode .report-card h3,
+body.dark-mode .report-card p,
+body.dark-mode .report-card label {
+  color: #e2e8f0;
+}
+
+/* Dark Mode - General Supervisor Text */
+body.dark-mode .supervisor-option-card .option-title {
+  color: #e2e8f0;
+}
+
+body.dark-mode .supervisor-option-card .option-description {
+  color: #cbd5e0;
+}
+
+body.dark-mode .capacity-chart-container {
+  background: #2d3748;
+  border-color: #4a5568;
+}
+
+body.dark-mode .loading-message,
+body.dark-mode .no-data-message {
+  color: #cbd5e0;
+}
+
+/* Ensure all table headers are visible in dark mode */
+body.dark-mode table th {
+  color: #e2e8f0;
+}
+
+body.dark-mode table td {
+  color: #cbd5e0;
+}
+
+/* Dark mode for all chart containers */
+body.dark-mode canvas {
+  background: transparent;
+}
