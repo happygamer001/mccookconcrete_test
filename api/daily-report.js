@@ -1,93 +1,164 @@
+// Daily Job Report API Endpoint
+// Handles batch manager daily report submissions
+
 module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Credentials', true);
+  // CORS headers
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,POST');
   res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
 
-  if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
 
   try {
-    const { 
-      name,
-      date, 
-      yardsOut, 
-      tripsOut, 
-      drivers, 
-      fuelReading, 
-      issues, 
-      issuePhoto,
-      preparedBy 
-    } = req.body;
-
     const notionApiKey = process.env.NOTION_API_KEY;
     const databaseId = process.env.NOTION_DAILY_REPORT_DB_ID;
 
-    if (!notionApiKey || !databaseId) {
+    // Validate environment variables
+    if (!notionApiKey) {
+      console.error('Missing NOTION_API_KEY');
       return res.status(500).json({ 
         success: false, 
-        error: 'Missing environment variables: NOTION_API_KEY or NOTION_DAILY_REPORT_DB_ID' 
+        error: 'Server configuration error: Missing API key' 
       });
     }
 
-    // Build driver properties (up to 5 drivers)
-    const driverProps = {};
-    drivers.forEach((driver, index) => {
-      if (driver.name && driver.hours) {
-        driverProps[`Driver ${index + 1} Name`] = {
-          rich_text: [{ text: { content: driver.name } }]
-        };
-        driverProps[`Driver ${index + 1} Hours`] = {
-          number: parseFloat(driver.hours)
-        };
-      }
-    });
+    if (!databaseId) {
+      console.error('Missing NOTION_DAILY_REPORT_DB_ID');
+      return res.status(500).json({ 
+        success: false, 
+        error: 'Server configuration error: Missing database ID' 
+      });
+    }
 
-    // Build Notion page properties
+    // Parse request body
+    const {
+      name,           // Batch manager name
+      date,
+      yardsOut,       // Concrete delivered (yards)
+      tripsOut,       // Trips/loads
+      drivers,        // Array of driver statuses
+      fuelReading,    // Fuel tank reading
+      issues,         // Issues/notes
+      preparedBy,     // Who submitted (same as name usually)
+      timestamp       // Submission timestamp
+    } = req.body;
+
+    // Validate required fields
+    if (!date) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Missing required field: date' 
+      });
+    }
+
+    if (!name) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Missing required field: name (batch manager)' 
+      });
+    }
+
+    // Build properties object for Notion
     const properties = {
-      'Name': {
-        title: [{ text: { content: `Daily Report - ${date}` } }]
+      'Date': {
+        date: {
+          start: date
+        }
       },
-      'Reporter Name': {
-        rich_text: [{ text: { content: name || 'Not provided' } }]
-      },
-      'Report Date': {
-        date: { start: date }
-      },
-      'Total Yards Out': {
-        number: parseFloat(yardsOut)
-      },
-      'Trips Out': {
-        number: parseFloat(tripsOut)
-      },
-      ...driverProps,
-      'End of Day Fuel Reading': {
-        number: parseFloat(fuelReading)
-      },
-      'Issues Presented': {
-        rich_text: [{ text: { content: issues || 'N/A' } }]
-      },
-      'Submitted By': {
-        rich_text: [{ text: { content: preparedBy } }]
+      'Batch Manager': {
+        select: {
+          name: name
+        }
       }
     };
 
-    // Handle photo upload if provided
-    if (issuePhoto) {
-      // Photo is base64 encoded - we need to upload it to Notion
-      // Notion API requires external URL, so we'll include it as a link
-      // For now, we'll store the base64 in the issues field with a note
-      // In production, you'd upload to cloud storage first
-      properties['Issue Photos'] = {
-        files: [{
-          name: `issue-photo-${Date.now()}.jpg`,
-          external: { url: issuePhoto } // This will be a base64 data URL
-        }]
+    // Add yards out (concrete delivered)
+    if (yardsOut !== undefined && yardsOut !== null && yardsOut !== '') {
+      properties['Concrete Delivered (yards)'] = {
+        number: parseFloat(yardsOut)
       };
     }
 
-    // Create Notion page
-    const notionRes = await fetch('https://api.notion.com/v1/pages', {
+    // Add trips out
+    if (tripsOut !== undefined && tripsOut !== null && tripsOut !== '') {
+      properties['Trips Out'] = {
+        number: parseFloat(tripsOut)
+      };
+    }
+
+    // Add fuel reading
+    if (fuelReading !== undefined && fuelReading !== null && fuelReading !== '') {
+      properties['Fuel Reading'] = {
+        number: parseFloat(fuelReading)
+      };
+    }
+
+    // Add issues/notes
+    if (issues && issues !== 'N/A') {
+      properties['Issues'] = {
+        rich_text: [
+          {
+            text: {
+              content: issues
+            }
+          }
+        ]
+      };
+    }
+
+    // Add driver statuses as a formatted string
+    if (drivers && drivers.length > 0) {
+      const driverSummary = drivers.map(d => {
+        const status = d.fullDay ? 'Full Day' : d.halfDay ? 'Half Day' : '';
+        return `${d.name}: ${status}`;
+      }).join(', ');
+      
+      properties['Drivers'] = {
+        rich_text: [
+          {
+            text: {
+              content: driverSummary
+            }
+          }
+        ]
+      };
+    }
+
+    // Add prepared by
+    if (preparedBy) {
+      properties['Prepared By'] = {
+        rich_text: [
+          {
+            text: {
+              content: preparedBy
+            }
+          }
+        ]
+      };
+    }
+
+    // Add timestamp
+    if (timestamp) {
+      properties['Submitted At'] = {
+        rich_text: [
+          {
+            text: {
+              content: timestamp
+            }
+          }
+        ]
+      };
+    }
+
+    // Create page in Notion
+    const response = await fetch('https://api.notion.com/v1/pages', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${notionApiKey}`,
@@ -95,25 +166,49 @@ module.exports = async (req, res) => {
         'Notion-Version': '2022-06-28'
       },
       body: JSON.stringify({
-        parent: { database_id: databaseId },
+        parent: {
+          database_id: databaseId
+        },
         properties: properties
       })
     });
 
-    const notionData = await notionRes.json();
+    const data = await response.json();
 
-    if (!notionRes.ok) {
-      console.error('Notion error:', JSON.stringify(notionData));
-      return res.status(500).json({ 
-        success: false, 
-        error: notionData.message || 'Notion API error' 
+    if (!response.ok) {
+      console.error('Notion API error:', JSON.stringify(data, null, 2));
+      
+      // Check for common errors
+      if (data.code === 'validation_error') {
+        return res.status(400).json({
+          success: false,
+          error: 'Database property mismatch',
+          details: data.message,
+          hint: 'Check that Notion database has correct property names and types'
+        });
+      }
+
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to create entry in Notion',
+        details: data.message || 'Unknown error'
       });
     }
 
-    return res.status(200).json({ success: true, id: notionData.id });
+    // Success!
+    return res.status(200).json({
+      success: true,
+      message: 'Daily report submitted successfully',
+      pageId: data.id
+    });
 
   } catch (error) {
-    console.error('Server error:', error.message);
-    return res.status(500).json({ success: false, error: error.message });
+    console.error('Daily report API error:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Server error',
+      message: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 };
