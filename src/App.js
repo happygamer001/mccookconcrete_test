@@ -1411,7 +1411,7 @@ function App() {
             >
               <div className="option-icon">📈</div>
               <div className="option-title">Capacity Planning</div>
-              <div className="option-description">Track fleet utilization and forecast hiring needs</div>
+              <div className="option-description">MCI at a Glance</div>
             </button>
           </div>
           
