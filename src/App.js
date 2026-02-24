@@ -580,16 +580,27 @@ function App() {
           plugins: {
             legend: {
               display: true,
-              position: 'top'
+              position: 'top',
+              labels: {
+                color: darkMode ? '#e2e8f0' : '#2d3748',
+                font: { size: 14, weight: '600' },
+                padding: 15
+              }
             },
             title: {
               display: true,
               text: 'Daily Loads vs Maximum Capacity',
-              font: { size: 16, weight: 'bold' }
+              font: { size: 16, weight: 'bold' },
+              color: darkMode ? '#e2e8f0' : '#2d3748'
             },
             tooltip: {
               mode: 'index',
-              intersect: false
+              intersect: false,
+              backgroundColor: darkMode ? 'rgba(45, 55, 72, 0.95)' : 'rgba(0, 0, 0, 0.8)',
+              titleColor: '#fff',
+              bodyColor: '#fff',
+              borderColor: darkMode ? '#4a5568' : '#e2e8f0',
+              borderWidth: 1
             }
           },
           scales: {
@@ -597,7 +608,8 @@ function App() {
               beginAtZero: true,
               title: {
                 display: true,
-                text: 'Number of Loads'
+                text: 'Number of Loads',
+                color: darkMode ? '#e2e8f0' : '#2d3748'
               },
               grid: {
                 color: darkMode ? '#4a5568' : '#e2e8f0'
@@ -609,7 +621,8 @@ function App() {
             x: {
               title: {
                 display: true,
-                text: 'Date'
+                text: 'Date',
+                color: darkMode ? '#e2e8f0' : '#2d3748'
               },
               grid: {
                 color: darkMode ? '#4a5568' : '#e2e8f0'
@@ -623,6 +636,122 @@ function App() {
       });
       
       window.capacityChartInstance = newChart;
+    }
+  }, [capacityData, trackingMode, showCapacityTable, darkMode]);
+  
+  // Render concrete yardage chart when data loads
+  useEffect(() => {
+    if (capacityData && trackingMode === 'capacity-planning' && !showCapacityTable) {
+      const ctx = document.getElementById('concreteChart');
+      if (!ctx) return;
+      
+      // Wait for Chart.js to be available
+      if (!window.Chart) {
+        console.log('Waiting for Chart.js to load...');
+        return;
+      }
+      
+      // Destroy existing chart if any
+      const existingChart = window.concreteChartInstance;
+      if (existingChart) {
+        existingChart.destroy();
+      }
+      
+      // Prepare chart data
+      const labels = capacityData.dailyData.map(day => {
+        const date = new Date(day.date);
+        return `${date.getMonth() + 1}/${date.getDate()}`;
+      });
+      
+      const concreteData = capacityData.dailyData.map(day => day.concreteYards || 0);
+      
+      // Create new chart
+      const newChart = new window.Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Concrete Delivered (Yards)',
+              data: concreteData,
+              borderColor: '#38b2ac',
+              backgroundColor: 'rgba(56, 178, 172, 0.1)',
+              borderWidth: 3,
+              fill: true,
+              tension: 0.4,
+              pointRadius: 4,
+              pointHoverRadius: 6,
+              pointBackgroundColor: '#38b2ac'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: {
+              display: true,
+              position: 'top',
+              labels: {
+                color: darkMode ? '#e2e8f0' : '#2d3748',
+                font: { size: 14, weight: '600' },
+                padding: 15
+              }
+            },
+            title: {
+              display: true,
+              text: 'Daily Concrete Delivered',
+              font: { size: 16, weight: 'bold' },
+              color: darkMode ? '#e2e8f0' : '#2d3748'
+            },
+            tooltip: {
+              mode: 'index',
+              intersect: false,
+              backgroundColor: darkMode ? 'rgba(45, 55, 72, 0.95)' : 'rgba(0, 0, 0, 0.8)',
+              titleColor: '#fff',
+              bodyColor: '#fff',
+              borderColor: darkMode ? '#4a5568' : '#e2e8f0',
+              borderWidth: 1,
+              callbacks: {
+                label: function(context) {
+                  return `${context.dataset.label}: ${context.parsed.y} yards`;
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Yards of Concrete',
+                color: darkMode ? '#e2e8f0' : '#2d3748'
+              },
+              grid: {
+                color: darkMode ? '#4a5568' : '#e2e8f0'
+              },
+              ticks: {
+                color: darkMode ? '#cbd5e0' : '#4a5568'
+              }
+            },
+            x: {
+              title: {
+                display: true,
+                text: 'Date',
+                color: darkMode ? '#e2e8f0' : '#2d3748'
+              },
+              grid: {
+                color: darkMode ? '#4a5568' : '#e2e8f0'
+              },
+              ticks: {
+                color: darkMode ? '#cbd5e0' : '#4a5568'
+              }
+            }
+          }
+        }
+      });
+      
+      window.concreteChartInstance = newChart;
     }
   }, [capacityData, trackingMode, showCapacityTable, darkMode]);
   
@@ -2129,6 +2258,12 @@ function App() {
                 </div>
                 
                 <div className="kpi-card">
+                  <div className="kpi-label">Concrete Delivered</div>
+                  <div className="kpi-value">{capacityData.summary.totalConcreteYards || 0}</div>
+                  <div className="kpi-sub">yards total</div>
+                </div>
+                
+                <div className="kpi-card">
                   <div className="kpi-label">Peak Day</div>
                   <div className="kpi-value">{capacityData.summary.peakDay.loads}</div>
                   <div className="kpi-sub">loads</div>
@@ -2143,17 +2278,23 @@ function App() {
                 </div>
                 
                 <div className="kpi-card">
-                  <div className="kpi-label">Total Loads</div>
-                  <div className="kpi-value">{capacityData.summary.totalLoads}</div>
-                  <div className="kpi-sub">in {currentQuarter.label}</div>
+                  <div className="kpi-label">Avg Daily Yards</div>
+                  <div className="kpi-value">{capacityData.summary.avgDailyYards || 0}</div>
+                  <div className="kpi-sub">yards per day</div>
                 </div>
               </div>
               
               {/* Chart or Table View */}
               {!showCapacityTable ? (
-                <div className="capacity-chart-container">
-                  <canvas id="capacityChart" style={{ maxHeight: '400px' }}></canvas>
-                </div>
+                <>
+                  <div className="capacity-chart-container">
+                    <canvas id="capacityChart" style={{ maxHeight: '400px' }}></canvas>
+                  </div>
+                  
+                  <div className="capacity-chart-container" style={{ marginTop: '20px' }}>
+                    <canvas id="concreteChart" style={{ maxHeight: '400px' }}></canvas>
+                  </div>
+                </>
               ) : (
                 <div className="capacity-table-container">
                   <table className="capacity-table">
@@ -2161,6 +2302,7 @@ function App() {
                       <tr>
                         <th>Date</th>
                         <th>Loads</th>
+                        <th>Concrete (yds)</th>
                         <th>Max Capacity</th>
                         <th>Utilization</th>
                         <th>Trucks Active</th>
@@ -2171,6 +2313,7 @@ function App() {
                         <tr key={day.date}>
                           <td>{new Date(day.date).toLocaleDateString()}</td>
                           <td>{day.loads}</td>
+                          <td>{day.concreteYards || 0}</td>
                           <td>{day.maxCapacity}</td>
                           <td>
                             <span className={day.utilizationPercent >= 85 ? 'util-high' : 'util-normal'}>
