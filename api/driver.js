@@ -1,6 +1,5 @@
-// Consolidated Driver API Endpoint
-// Handles: mileage (start/complete), fuel submission, incomplete checks, daily trips
-// Replaces: mileage.js, fuel.js, get-incomplete-mileage.js, get-daily-trips.js
+// Daily Job Report API Endpoint
+// Handles batch manager daily report submissions
 
 module.exports = async (req, res) => {
   // CORS headers
@@ -13,399 +12,213 @@ module.exports = async (req, res) => {
     return res.status(200).end();
   }
 
-  const { action } = req.method === 'GET' ? req.query : req.body;
-
-  if (!action) {
-    return res.status(400).json({ error: 'Missing action parameter' });
-  }
-
-  const notionApiKey = process.env.NOTION_API_KEY;
-  const mileageDatabaseId = process.env.NOTION_MILEAGE_DB_ID;
-  const fuelDatabaseId = process.env.NOTION_FUEL_DB_ID;
-
-  if (!notionApiKey) {
-    return res.status(500).json({ error: 'Missing NOTION_API_KEY' });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    switch (action) {
-      case 'start-mileage':
-        return await handleStartMileage(req, res, notionApiKey, mileageDatabaseId);
-      
-      case 'complete-mileage':
-        return await handleCompleteMileage(req, res, notionApiKey, mileageDatabaseId);
-      
-      case 'cross-state':
-        return await handleCrossState(req, res, notionApiKey, mileageDatabaseId);
-      
-      case 'submit-fuel':
-        return await handleSubmitFuel(req, res, notionApiKey, fuelDatabaseId);
-      
-      case 'check-incomplete':
-        return await handleCheckIncomplete(req, res, notionApiKey, mileageDatabaseId);
-      
-      case 'get-daily-trips':
-        return await handleGetDailyTrips(req, res, notionApiKey, mileageDatabaseId);
-      
-      default:
-        return res.status(400).json({ error: 'Invalid action' });
+    const notionApiKey = process.env.NOTION_API_KEY;
+    const databaseId = process.env.NOTION_DAILY_REPORT_DB_ID;
+
+    // Validate environment variables
+    if (!notionApiKey) {
+      console.error('Missing NOTION_API_KEY');
+      return res.status(500).json({ 
+        success: false, 
+        error: 'Server configuration error: Missing API key' 
+      });
     }
-  } catch (error) {
-    console.error('Driver API error:', error);
-    return res.status(500).json({ 
-      success: false, 
-      error: 'Server error',
-      message: error.message 
-    });
-  }
-};
 
-// Helper: Start Mileage
-async function handleStartMileage(req, res, apiKey, databaseId) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+    if (!databaseId) {
+      console.error('Missing NOTION_DAILY_REPORT_DB_ID');
+      return res.status(500).json({ 
+        success: false, 
+        error: 'Server configuration error: Missing database ID' 
+      });
+    }
 
-  const { driverName, truckNumber, startMileage, currentState, date, startTime } = req.body;
+    // Parse request body
+    const {
+      name,           // Batch manager name (submitter)
+      date,           // Report date
+      yardsOut,       // Total yards of concrete delivered
+      tripsOut,       // Number of trips/loads
+      drivers,        // Array of driver objects: [{name, status, hours}, ...]
+      fuelReading,    // End of day fuel tank reading
+      issues,         // Issues/notes
+      preparedBy,     // Who submitted (same as name usually)
+      timestamp       // Submission timestamp
+    } = req.body;
 
-  if (!driverName || !truckNumber || !startMileage || !currentState || !date) {
-    return res.status(400).json({ error: 'Missing required fields' });
-  }
+    console.log('Received daily report:', { name, date, yardsOut, tripsOut, drivers, fuelReading, issues });
 
-  const properties = {
-    'Driver Name': { select: { name: driverName } },
-    'Truck Number': { select: { name: truckNumber } },
-    'Start Mileage': { number: parseInt(startMileage) },
-    'Current State': { select: { name: currentState } },
-    'Date': { date: { start: date } },
-    'Status': { status: { name: 'In Progress' } }
-  };
+    // Validate required fields
+    if (!date) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Missing required field: date' 
+      });
+    }
 
-  if (startTime) {
-    properties['Start Time'] = { rich_text: [{ text: { content: startTime } }] };
-  }
+    if (!name) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Missing required field: name (batch manager)' 
+      });
+    }
 
-  const response = await fetch('https://api.notion.com/v1/pages', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-      'Notion-Version': '2022-06-28'
-    },
-    body: JSON.stringify({
-      parent: { database_id: databaseId },
-      properties: properties
-    })
-  });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    console.error('Notion API error:', data);
-    return res.status(500).json({ success: false, error: 'Failed to create entry' });
-  }
-
-  return res.status(200).json({ 
-    success: true, 
-    pageId: data.id,
-    message: 'Mileage entry started successfully'
-  });
-}
-
-// Helper: Complete Mileage
-async function handleCompleteMileage(req, res, apiKey, databaseId) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
-  const { 
-    pageId, 
-    endMileage, 
-    endState, 
-    endTime,
-    jobSiteArrivalTime,
-    jobSiteDepartureTime,
-    totalDeliveryTime,
-    totalJobSiteTime
-  } = req.body;
-
-  if (!pageId || !endMileage || !endState) {
-    return res.status(400).json({ error: 'Missing required fields' });
-  }
-
-  const properties = {
-    'End Mileage': { number: parseInt(endMileage) },
-    'End State': { select: { name: endState } },
-    'Status': { status: { name: 'Done' } }
-  };
-
-  if (endTime) {
-    properties['End Time'] = { rich_text: [{ text: { content: endTime } }] };
-  }
-
-  // Optional job site timing fields
-  if (jobSiteArrivalTime) {
-    properties['Job Site Arrival'] = { rich_text: [{ text: { content: jobSiteArrivalTime } }] };
-  }
-  if (jobSiteDepartureTime) {
-    properties['Job Site Departure'] = { rich_text: [{ text: { content: jobSiteDepartureTime } }] };
-  }
-  if (totalDeliveryTime) {
-    properties['Total Delivery Time (hrs)'] = { number: parseFloat(totalDeliveryTime) };
-  }
-  if (totalJobSiteTime) {
-    properties['Total Job Site Time (hrs)'] = { number: parseFloat(totalJobSiteTime) };
-  }
-
-  const response = await fetch(`https://api.notion.com/v1/pages/${pageId}`, {
-    method: 'PATCH',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-      'Notion-Version': '2022-06-28'
-    },
-    body: JSON.stringify({ properties })
-  });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    console.error('Notion API error:', data);
-    return res.status(500).json({ success: false, error: 'Failed to complete entry' });
-  }
-
-  return res.status(200).json({ 
-    success: true,
-    message: 'Mileage entry completed successfully'
-  });
-}
-
-// Helper: Cross State Line
-async function handleCrossState(req, res, apiKey, databaseId) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
-  const { pageId, crossedState, crossTime } = req.body;
-
-  if (!pageId || !crossedState) {
-    return res.status(400).json({ error: 'Missing required fields' });
-  }
-
-  const properties = {
-    'Crossed State Line': { checkbox: true },
-    'State at Crossing': { select: { name: crossedState } }
-  };
-
-  if (crossTime) {
-    properties['Cross Time'] = { rich_text: [{ text: { content: crossTime } }] };
-  }
-
-  const response = await fetch(`https://api.notion.com/v1/pages/${pageId}`, {
-    method: 'PATCH',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-      'Notion-Version': '2022-06-28'
-    },
-    body: JSON.stringify({ properties })
-  });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    console.error('Notion API error:', data);
-    return res.status(500).json({ success: false, error: 'Failed to update state crossing' });
-  }
-
-  return res.status(200).json({ 
-    success: true,
-    message: 'State crossing recorded successfully'
-  });
-}
-
-// Helper: Submit Fuel
-async function handleSubmitFuel(req, res, apiKey, databaseId) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
-  const { driverName, truckNumber, gallons, date, location } = req.body;
-
-  if (!driverName || !truckNumber || !gallons || !date) {
-    return res.status(400).json({ error: 'Missing required fields' });
-  }
-
-  const properties = {
-    'Driver Name': { select: { name: driverName } },
-    'Truck Number': { select: { name: truckNumber } },
-    'Gallons': { number: parseFloat(gallons) },
-    'Date': { date: { start: date } }
-  };
-
-  if (location) {
-    properties['Location'] = { rich_text: [{ text: { content: location } }] };
-  }
-
-  const response = await fetch('https://api.notion.com/v1/pages', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-      'Notion-Version': '2022-06-28'
-    },
-    body: JSON.stringify({
-      parent: { database_id: databaseId },
-      properties: properties
-    })
-  });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    console.error('Notion API error:', data);
-    return res.status(500).json({ success: false, error: 'Failed to create fuel entry' });
-  }
-
-  return res.status(200).json({ 
-    success: true,
-    message: 'Fuel entry submitted successfully'
-  });
-}
-
-// Helper: Check Incomplete Mileage
-async function handleCheckIncomplete(req, res, apiKey, databaseId) {
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
-  const { driver, truck } = req.query;
-
-  if (!driver || !truck) {
-    return res.status(400).json({ error: 'Missing driver or truck parameter' });
-  }
-
-  const response = await fetch(`https://api.notion.com/v1/databases/${databaseId}/query`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-      'Notion-Version': '2022-06-28'
-    },
-    body: JSON.stringify({
-      filter: {
-        and: [
+    // Build properties object for Notion
+    // Name is the title property
+    const properties = {
+      'Name': {
+        title: [
           {
-            property: 'Driver Name',
-            select: { equals: driver }
-          },
-          {
-            property: 'Truck Number',
-            select: { equals: truck }
-          },
-          {
-            property: 'Status',
-            status: { equals: 'In Progress' }
+            text: {
+              content: `Daily Report - ${date}`
+            }
           }
         ]
       },
-      sorts: [
-        {
-          property: 'Date',
-          direction: 'descending'
+      'Report Date': {
+        date: {
+          start: date
         }
-      ],
-      page_size: 1
-    })
-  });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    console.error('Notion API error:', data);
-    return res.status(500).json({ success: false, error: 'Failed to check incomplete entries' });
-  }
-
-  if (data.results && data.results.length > 0) {
-    const entry = data.results[0];
-    return res.status(200).json({
-      success: true,
-      hasIncomplete: true,
-      pageId: entry.id,
-      startMileage: entry.properties['Start Mileage']?.number || 0,
-      currentState: entry.properties['Current State']?.select?.name || '',
-      date: entry.properties['Date']?.date?.start || ''
-    });
-  }
-
-  return res.status(200).json({
-    success: true,
-    hasIncomplete: false
-  });
-}
-
-// Helper: Get Daily Trips
-async function handleGetDailyTrips(req, res, apiKey, databaseId) {
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
-  const { driver, truck, date } = req.query;
-
-  if (!driver || !truck || !date) {
-    return res.status(400).json({ error: 'Missing required parameters' });
-  }
-
-  const response = await fetch(`https://api.notion.com/v1/databases/${databaseId}/query`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-      'Notion-Version': '2022-06-28'
-    },
-    body: JSON.stringify({
-      filter: {
-        and: [
+      },
+      'Submitted By': {
+        rich_text: [
           {
-            property: 'Driver Name',
-            select: { equals: driver }
-          },
-          {
-            property: 'Truck Number',
-            select: { equals: truck }
-          },
-          {
-            property: 'Date',
-            date: { equals: date }
-          },
-          {
-            property: 'Status',
-            status: { equals: 'Done' }
+            text: {
+              content: name || preparedBy || 'Unknown'
+            }
           }
         ]
       }
-    })
-  });
+    };
 
-  const data = await response.json();
+    // Add total yards out (concrete delivered)
+    if (yardsOut !== undefined && yardsOut !== null && yardsOut !== '') {
+      const yards = parseFloat(yardsOut);
+      if (!isNaN(yards)) {
+        properties['Total Yards Out'] = {
+          number: yards
+        };
+      }
+    }
 
-  if (!response.ok) {
-    console.error('Notion API error:', data);
-    return res.status(500).json({ success: false, error: 'Failed to fetch daily trips' });
+    // Add trips out
+    if (tripsOut !== undefined && tripsOut !== null && tripsOut !== '') {
+      const trips = parseFloat(tripsOut);
+      if (!isNaN(trips)) {
+        properties['Trips Out'] = {
+          number: trips
+        };
+      }
+    }
+
+    // Add end of day fuel reading
+    if (fuelReading !== undefined && fuelReading !== null && fuelReading !== '') {
+      const fuel = parseFloat(fuelReading);
+      if (!isNaN(fuel)) {
+        properties['End of Day Fuel Reading'] = {
+          number: fuel
+        };
+      }
+    }
+
+    // Add issues presented
+    if (issues) {
+      properties['Issues Presented'] = {
+        rich_text: [
+          {
+            text: {
+              content: issues
+            }
+          }
+        ]
+      };
+    }
+
+    // Process drivers array into individual driver fields
+    // Expected format: [{name: "James", status: "Working", hours: 8}, ...]
+    if (drivers && Array.isArray(drivers)) {
+      drivers.forEach((driver, index) => {
+        if (index < 5 && driver.name) { // Only 5 driver slots
+          const driverNum = index + 1;
+          
+          // Set driver name
+          properties[`Driver ${driverNum} Name`] = {
+            rich_text: [
+              {
+                text: {
+                  content: driver.name
+                }
+              }
+            ]
+          };
+
+          // Set driver hours (if provided)
+          if (driver.hours !== undefined && driver.hours !== null && driver.hours !== '') {
+            const hours = parseFloat(driver.hours);
+            if (!isNaN(hours)) {
+              properties[`Driver ${driverNum} Hours`] = {
+                number: hours
+              };
+            }
+          }
+        }
+      });
+    }
+
+    console.log('Notion properties:', JSON.stringify(properties, null, 2));
+
+    // Create page in Notion
+    const response = await fetch('https://api.notion.com/v1/pages', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${notionApiKey}`,
+        'Content-Type': 'application/json',
+        'Notion-Version': '2022-06-28'
+      },
+      body: JSON.stringify({
+        parent: {
+          database_id: databaseId
+        },
+        properties: properties
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error('Notion API error:', JSON.stringify(data, null, 2));
+      
+      // Extract specific error details
+      let errorDetails = '';
+      if (data.message) {
+        errorDetails = data.message;
+      }
+      
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Database property mismatch',
+        details: errorDetails,
+        hint: 'Check that Notion database has correct property names and types'
+      });
+    }
+
+    console.log('Successfully created daily report in Notion');
+    return res.status(200).json({ 
+      success: true, 
+      message: 'Daily report submitted successfully',
+      pageId: data.id
+    });
+
+  } catch (error) {
+    console.error('Error in daily report API:', error);
+    return res.status(500).json({ 
+      success: false, 
+      error: 'Internal server error',
+      details: error.message
+    });
   }
-
-  const trips = data.results.map(entry => ({
-    id: entry.id,
-    startMileage: entry.properties['Start Mileage']?.number || 0,
-    endMileage: entry.properties['End Mileage']?.number || 0,
-    startState: entry.properties['Current State']?.select?.name || '',
-    endState: entry.properties['End State']?.select?.name || '',
-    crossedStateLine: entry.properties['Crossed State Line']?.checkbox || false
-  }));
-
-  return res.status(200).json({
-    success: true,
-    trips: trips,
-    totalTrips: trips.length
-  });
-}
+}; 
