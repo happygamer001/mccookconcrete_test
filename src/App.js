@@ -462,8 +462,8 @@ function App() {
         try {
           // Fetch both mileage and fuel entries (all historical data)
           const [mileageRes, fuelRes] = await Promise.all([
-            fetch('https://mileage-tracker-final.vercel.app/api/supervisor-data?view=recent-entries?type=mileage&days=9999'),
-            fetch('https://mileage-tracker-final.vercel.app/api/supervisor-data?view=recent-entries?type=fuel&days=9999')
+            fetch('https://mileage-tracker-final.vercel.app/api/supervisor-data?view=recent-entries&type=mileage&days=9999'),
+            fetch('https://mileage-tracker-final.vercel.app/api/supervisor-data?view=recent-entries&type=fuel&days=9999')
           ]);
           
           const mileageData = await mileageRes.json();
