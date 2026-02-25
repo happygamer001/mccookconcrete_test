@@ -460,10 +460,10 @@ function App() {
       const fetchRecentEntries = async () => {
         setLoadingEntries(true);
         try {
-          // Fetch both mileage and fuel entries
+          // Fetch both mileage and fuel entries (all historical data)
           const [mileageRes, fuelRes] = await Promise.all([
-            fetch('https://mileage-tracker-final.vercel.app/api/supervisor-data?view=recent-entries?type=mileage&days=7'),
-            fetch('https://mileage-tracker-final.vercel.app/api/supervisor-data?view=recent-entries?type=fuel&days=7')
+            fetch('https://mileage-tracker-final.vercel.app/api/supervisor-data?view=recent-entries?type=mileage&days=9999'),
+            fetch('https://mileage-tracker-final.vercel.app/api/supervisor-data?view=recent-entries?type=fuel&days=9999')
           ]);
           
           const mileageData = await mileageRes.json();
@@ -2063,7 +2063,7 @@ function App() {
           <div className="week-container">
             <div className="week-header">
               <h2>✏️ Edit Entries</h2>
-              <p className="week-date-range">Last 7 days</p>
+              <p className="week-date-range">All Historical Entries</p>
             </div>
 
             {loadingEntries && (
@@ -2078,7 +2078,7 @@ function App() {
                 {/* Mileage Entries */}
                 <h3 style={{ marginTop: '30px', marginBottom: '15px', color: '#2d3748' }}>📍 Mileage Entries</h3>
                 {recentEntries.mileage.length === 0 ? (
-                  <p style={{ color: '#718096', textAlign: 'center', padding: '20px' }}>No mileage entries in the last 7 days.</p>
+                  <p style={{ color: '#718096', textAlign: 'center', padding: '20px' }}>No mileage entries found.</p>
                 ) : (
                   <div className="entries-list">
                     {recentEntries.mileage.map((entry) => (
@@ -2123,7 +2123,7 @@ function App() {
                 {/* Fuel Entries */}
                 <h3 style={{ marginTop: '30px', marginBottom: '15px', color: '#2d3748' }}>⛽ Fuel Entries</h3>
                 {recentEntries.fuel.length === 0 ? (
-                  <p style={{ color: '#718096', textAlign: 'center', padding: '20px' }}>No fuel entries in the last 7 days.</p>
+                  <p style={{ color: '#718096', textAlign: 'center', padding: '20px' }}>No fuel entries found.</p>
                 ) : (
                   <div className="entries-list">
                     {recentEntries.fuel.map((entry) => (
