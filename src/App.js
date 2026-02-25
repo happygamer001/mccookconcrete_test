@@ -1217,6 +1217,8 @@ function App() {
         startTime: getCentralISOString()
       };
 
+      console.log('Starting mileage with payload:', payload);
+
       try {
         const response = await fetch('https://mileage-tracker-final.vercel.app/api/driver', {
           method: 'POST',
@@ -1225,6 +1227,9 @@ function App() {
           },
           body: JSON.stringify(payload),
         });
+
+        const responseData = await response.json();
+        console.log('Start mileage response:', response.status, responseData);
 
         if (response.ok) {
           setSubmitStatus({ type: 'success', message: '✅ Shift started! Come back later to enter your ending mileage.' });
@@ -1238,11 +1243,14 @@ function App() {
             mileageEnd: ''
           });
         } else {
-          throw new Error('Failed to submit data');
+          const errorMsg = responseData.error || responseData.message || 'Failed to submit data';
+          const errorDetails = responseData.details ? `\n${responseData.details}` : '';
+          setSubmitStatus({ type: 'error', message: `❌ ${errorMsg}${errorDetails}` });
+          console.error('Server error:', responseData);
         }
       } catch (error) {
         console.error('Error starting mileage:', error);
-        setSubmitStatus({ type: 'error', message: 'Failed to submit data. Please try again.' });
+        setSubmitStatus({ type: 'error', message: '❌ Network error. Please check your connection and try again.' });
         setIsLoading(false);
       }
     }
@@ -1360,10 +1368,15 @@ function App() {
       const driverName = key.startsWith('Custom') ? status.name : key;
       
       if (driverName && (status.halfDay || status.fullDay)) {
+        // Calculate hours: half day = 4 hours, full day = 8 hours
+        let hours = 0;
+        if (status.fullDay) hours = 8;
+        else if (status.halfDay) hours = 4;
+        
         drivers.push({
           name: driverName,
-          halfDay: status.halfDay,
-          fullDay: status.fullDay
+          status: status.fullDay ? 'Working (Full Day)' : 'Working (Half Day)',
+          hours: hours
         });
       }
     });
