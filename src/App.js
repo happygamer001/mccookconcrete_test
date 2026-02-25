@@ -246,14 +246,20 @@ function App() {
       );
       
       const data = await response.json();
+      console.log('Check incomplete response:', data); // Debug log
       
-      if (data.found) {
-        setIncompleteEntry(data.entry);
+      if (data.hasIncomplete) {
+        setIncompleteEntry({
+          id: data.pageId,
+          date: data.date,
+          state: data.currentState,
+          mileageStart: data.startMileage
+        });
         // Pre-fill the form with the incomplete entry data
         setMileageData({
-          date: data.entry.date,
-          state: data.entry.state,
-          mileageStart: data.entry.mileageStart.toString(),
+          date: data.date,
+          state: data.currentState,
+          mileageStart: data.startMileage.toString(),
           mileageEnd: ''
         });
       } else {
