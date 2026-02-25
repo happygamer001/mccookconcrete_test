@@ -3618,16 +3618,33 @@ function App() {
 
             <div className="form-group">
               <label htmlFor="fuel-reading">End of Day Fuel Tank Reading:</label>
-              <input
-                id="fuel-reading"
-                type="number"
-                step="0.1"
-                value={dailyReportData.fuelReading}
-                onChange={(e) => setDailyReportData({...dailyReportData, fuelReading: e.target.value})}
-                placeholder="e.g., 14642"
-                required
-                className="number-input"
-              />
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <input
+                  id="fuel-reading"
+                  type="number"
+                  step="0.1"
+                  value={dailyReportData.fuelReading}
+                  onChange={(e) => setDailyReportData({...dailyReportData, fuelReading: e.target.value})}
+                  placeholder="e.g., 14642"
+                  className="number-input"
+                  style={{ flex: 1 }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setDailyReportData({...dailyReportData, fuelReading: '0'})}
+                  className="btn btn-secondary"
+                  style={{ 
+                    padding: '8px 16px',
+                    fontSize: '14px',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  No Reading
+                </button>
+              </div>
+              <small style={{ color: '#718096', fontSize: '12px', display: 'block', marginTop: '5px' }}>
+                Click "No Reading" if this data is not available
+              </small>
             </div>
 
             <div className="form-group">
