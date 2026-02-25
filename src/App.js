@@ -1103,6 +1103,45 @@ function App() {
     
     const driverName = currentDriver === 'Other' ? customDriverName : currentDriver;
     
+    // ALWAYS check for incomplete entry before starting a new shift
+    // This is critical for historical data entry
+    if (!incompleteEntry) {
+      try {
+        const checkResponse = await fetch(
+          `https://mileage-tracker-final.vercel.app/api/driver?action=check-incomplete&driver=${encodeURIComponent(driverName)}&truck=${encodeURIComponent(selectedTruck)}`
+        );
+        const checkData = await checkResponse.json();
+        
+        if (checkData.hasIncomplete) {
+          // Found an incomplete entry - block new entry creation
+          setIncompleteEntry({
+            id: checkData.pageId,
+            date: checkData.date,
+            state: checkData.currentState,
+            mileageStart: checkData.startMileage
+          });
+          
+          // Pre-fill the form
+          setMileageData({
+            date: checkData.date,
+            state: checkData.currentState,
+            mileageStart: checkData.startMileage.toString(),
+            mileageEnd: ''
+          });
+          
+          setSubmitStatus({ 
+            type: 'error', 
+            message: `⚠️ You have an active shift from ${checkData.date}. Please complete it before starting a new one.` 
+          });
+          setIsLoading(false);
+          return; // Stop here - don't create new entry
+        }
+      } catch (error) {
+        console.error('Error checking for incomplete entry:', error);
+        // Continue with new entry creation if check fails
+      }
+    }
+    
     // If completing an existing entry
     if (incompleteEntry) {
       const totalMiles = parseFloat(mileageData.mileageEnd) - parseFloat(mileageData.mileageStart);
